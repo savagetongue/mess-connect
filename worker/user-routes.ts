@@ -58,6 +58,20 @@ const MarkAsPaidSchema = z.object({
 const FeeSchema = z.object({
     monthlyFee: z.number().positive("Fee must be a positive number."),
 });
+const CreateOrderSchema = z.object({
+    amount: z.number().positive(),
+    name: z.string().optional(),
+    phone: z.string().optional(),
+});
+const VerifyPaymentSchema = z.object({
+    razorpay_order_id: z.string(),
+    razorpay_payment_id: z.string(),
+    razorpay_signature: z.string(),
+    amount: z.number(),
+    name: z.string().optional(),
+    phone: z.string().optional(),
+    studentId: z.string().optional(),
+});
 const getUser = async (c: any, next: any) => {
     const authHeader = c.req.header('Authorization');
     if (authHeader && authHeader.startsWith('Bearer fake-token-for-')) {
@@ -107,14 +121,6 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const { passwordHash, ...userResponse } = user;
         return ok(c, { ...userResponse, token: `fake-token-for-${user.id}` });
     });
-    app.post('/api/guest-payment', async (c) => {
-        const body = await c.req.json();
-        const validation = GuestPaymentSchema.safeParse(body);
-        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
-        const { name, phone, amount } = validation.data;
-        const payment = await GuestPaymentEntity.create(c.env, { id: crypto.randomUUID(), name, phone, amount, createdAt: Date.now() });
-        return ok(c, payment);
-    });
     // PROTECTED ROUTES
     app.use('/api/*', getUser);
     app.get('/api/menu', async (c) => {
@@ -151,6 +157,52 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         }
         const settings = await settingEntity.getState();
         return ok(c, { monthlyFee: settings.monthlyFee });
+    });
+    // PAYMENT FLOW
+    app.post('/api/payments/create-order', async (c) => {
+        const body = await c.req.json();
+        const validation = CreateOrderSchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        // In a real app, you would call Razorpay's Orders API here.
+        // We will simulate it by creating a mock order ID.
+        const mockOrder = {
+            id: `order_${crypto.randomUUID()}`,
+            amount: validation.data.amount * 100, // Razorpay expects amount in paise
+            currency: 'INR',
+        };
+        return ok(c, mockOrder);
+    });
+    app.post('/api/payments/verify-payment', async (c) => {
+        const body = await c.req.json();
+        const validation = VerifyPaymentSchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        // In a real app, you would verify the signature here.
+        // We will simulate success and create the payment record.
+        const { amount, name, phone, studentId } = validation.data;
+        if (studentId) {
+            const student = await new UserEntity(c.env, studentId).getState();
+            const payment = await PaymentEntity.create(c.env, {
+                id: crypto.randomUUID(),
+                userId: studentId,
+                userName: student.name,
+                amount,
+                month: format(new Date(), "yyyy-MM"),
+                status: 'paid',
+                method: 'razorpay',
+                createdAt: Date.now(),
+            });
+            return ok(c, { status: 'success', payment });
+        } else if (name && phone) {
+            const guestPayment = await GuestPaymentEntity.create(c.env, {
+                id: crypto.randomUUID(),
+                name,
+                phone,
+                amount,
+                createdAt: Date.now(),
+            });
+            return ok(c, { status: 'success', payment: guestPayment });
+        }
+        return bad(c, 'Invalid payment details');
     });
     // STUDENT ROUTES
     app.get('/api/student/dues', async (c) => {
