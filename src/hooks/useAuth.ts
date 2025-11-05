@@ -11,7 +11,7 @@ interface AuthState {
   logout: () => void;
   _hydrated: boolean;
 }
-const useAuthStore = create<AuthState>()(
+export const useAuth = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
@@ -65,15 +65,18 @@ const useAuthStore = create<AuthState>()(
     }
   )
 );
-useAuthStore.subscribe((state, prevState) => {
+// Redirect logic on initial load
+useAuth.subscribe((state, prevState) => {
   if (state._hydrated && !prevState._hydrated) {
-    const { token } = state;
+    const { user, token } = state;
     const path = window.location.pathname;
-    const publicPaths = ['/', '/register', '/pending-approval', '/guest-payment'];
-    const isPublicPath = publicPaths.some(p => path.startsWith(p)) || path.startsWith('/verify/') || path.startsWith('/reset/');
-    if (!token && !isPublicPath) {
+    if (token && user) {
+      const dashboardUrl = `/${user.role}/dashboard`;
+      if (!path.startsWith(`/${user.role}`)) {
+        window.location.href = dashboardUrl;
+      }
+    } else if (!['/', '/register', '/pending-approval', '/guest-payment'].includes(path)) {
       window.location.href = '/';
     }
   }
 });
-export const useAuth = useAuthStore;

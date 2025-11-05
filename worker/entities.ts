@@ -1,41 +1,55 @@
-/**
- * Minimal real-world demo: One Durable Object instance per entity (User, ChatBoard), with Indexes for listing.
- */
 import { IndexedEntity } from "./core-utils";
-import type { User, Chat, ChatMessage } from "@shared/types";
-import { MOCK_CHAT_MESSAGES, MOCK_CHATS, MOCK_USERS } from "@shared/mock-data";
-
-// USER ENTITY: one DO instance per user
+import type { User, Complaint, Suggestion, WeeklyMenu, Payment, GuestPayment, Note } from "@shared/types";
+// USER ENTITY
 export class UserEntity extends IndexedEntity<User> {
   static readonly entityName = "user";
   static readonly indexName = "users";
-  static readonly initialState: User = { id: "", name: "" };
-  static seedData = MOCK_USERS;
+  static readonly initialState: User = { id: "", name: "", phone: "", passwordHash: "", role: "student", status: "pending" };
 }
-
-// CHAT BOARD ENTITY: one DO instance per chat board, stores its own messages
-export type ChatBoardState = Chat & { messages: ChatMessage[] };
-
-const SEED_CHAT_BOARDS: ChatBoardState[] = MOCK_CHATS.map(c => ({
-  ...c,
-  messages: MOCK_CHAT_MESSAGES.filter(m => m.chatId === c.id),
-}));
-
-export class ChatBoardEntity extends IndexedEntity<ChatBoardState> {
-  static readonly entityName = "chat";
-  static readonly indexName = "chats";
-  static readonly initialState: ChatBoardState = { id: "", title: "", messages: [] };
-  static seedData = SEED_CHAT_BOARDS;
-
-  async listMessages(): Promise<ChatMessage[]> {
-    const { messages } = await this.getState();
-    return messages;
-  }
-
-  async sendMessage(userId: string, text: string): Promise<ChatMessage> {
-    const msg: ChatMessage = { id: crypto.randomUUID(), chatId: this.id, userId, text, ts: Date.now() };
-    await this.mutate(s => ({ ...s, messages: [...s.messages, msg] }));
-    return msg;
-  }
+// COMPLAINT ENTITY
+export class ComplaintEntity extends IndexedEntity<Complaint> {
+  static readonly entityName = "complaint";
+  static readonly indexName = "complaints";
+  static readonly initialState: Complaint = { id: "", studentId: "", studentName: "", text: "", createdAt: 0 };
 }
-
+// SUGGESTION ENTITY
+export class SuggestionEntity extends IndexedEntity<Suggestion> {
+  static readonly entityName = "suggestion";
+  static readonly indexName = "suggestions";
+  static readonly initialState: Suggestion = { id: "", studentId: "", studentName: "", text: "", createdAt: 0 };
+}
+// MENU ENTITY (Singleton)
+export class MenuEntity extends IndexedEntity<WeeklyMenu> {
+    static readonly entityName = "menu";
+    static readonly indexName = "menus";
+    static readonly initialState: WeeklyMenu = {
+        id: 'singleton',
+        days: [
+            { day: 'Monday', breakfast: '', lunch: '', dinner: '' },
+            { day: 'Tuesday', breakfast: '', lunch: '', dinner: '' },
+            { day: 'Wednesday', breakfast: '', lunch: '', dinner: '' },
+            { day: 'Thursday', breakfast: '', lunch: '', dinner: '' },
+            { day: 'Friday', breakfast: '', lunch: '', dinner: '' },
+            { day: 'Saturday', breakfast: '', lunch: '', dinner: '' },
+            { day: 'Sunday', breakfast: '', lunch: '', dinner: '' },
+        ]
+    };
+}
+// PAYMENT ENTITY
+export class PaymentEntity extends IndexedEntity<Payment> {
+    static readonly entityName = "payment";
+    static readonly indexName = "payments";
+    static readonly initialState: Payment = { id: "", userId: "", userName: "", amount: 0, month: "", status: "due", method: "razorpay", createdAt: 0 };
+}
+// GUEST PAYMENT ENTITY
+export class GuestPaymentEntity extends IndexedEntity<GuestPayment> {
+    static readonly entityName = "guestPayment";
+    static readonly indexName = "guestPayments";
+    static readonly initialState: GuestPayment = { id: "", name: "", phone: "", amount: 0, createdAt: 0 };
+}
+// NOTE ENTITY
+export class NoteEntity extends IndexedEntity<Note> {
+    static readonly entityName = "note";
+    static readonly indexName = "notes";
+    static readonly initialState: Note = { id: "", text: "", completed: false, createdAt: 0 };
+}
