@@ -11,7 +11,7 @@ import { Toaster, toast } from '@/components/ui/sonner';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { api } from '@/lib/api-client';
 import { Utensils, ArrowLeft } from 'lucide-react';
-import { useTranslation } from '@/lib/i18n';
+import { useTranslation } from '@/hooks/useTranslation';
 import { LanguageToggle } from '@/components/LanguageToggle';
 declare global {
   interface Window {

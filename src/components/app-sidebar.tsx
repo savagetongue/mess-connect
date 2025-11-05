@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { useAuth, UserRole } from "@/hooks/useAuth";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation } from "@/hooks/useTranslation";
 interface AppSidebarProps {
   userRole?: UserRole;
 }
