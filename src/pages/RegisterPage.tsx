@@ -33,12 +33,12 @@ export function RegisterPage() {
         body: JSON.stringify(values),
       });
       toast.success('Registration successful!', {
-        description: 'Your account is pending approval. Redirecting...',
-        duration: 2000,
-        onAutoClose: () => navigate('/pending-approval'),
+        description: 'Your account is pending approval by the manager.',
       });
+      setTimeout(() => navigate('/pending-approval'), 2000);
     } catch (error: any) {
       toast.error(error.message || 'Registration failed. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };

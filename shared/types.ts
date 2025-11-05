@@ -3,22 +3,62 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
 }
-
-// Minimal real-world chat example types (shared by frontend and worker)
+export type UserRole = 'student' | 'manager' | 'admin';
+export type UserStatus = 'pending' | 'approved' | 'rejected';
 export interface User {
-  id: string;
+  id: string; // email
   name: string;
+  phone: string;
+  passwordHash: string;
+  role: UserRole;
+  status: UserStatus;
 }
-
-export interface Chat {
+export interface Complaint {
   id: string;
-  title: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  chatId: string;
-  userId: string;
+  studentId: string;
+  studentName: string;
   text: string;
-  ts: number; // epoch millis
+  imageUrl?: string;
+  reply?: string;
+  createdAt: number;
+}
+export interface Suggestion {
+  id: string;
+  studentId: string;
+  studentName: string;
+  text: string;
+  reply?: string;
+  createdAt: number;
+}
+export interface WeeklyMenu {
+  id: 'singleton'; // Only one menu
+  days: {
+    day: string;
+    breakfast: string;
+    lunch: string;
+    dinner: string;
+  }[];
+}
+export interface Payment {
+  id: string;
+  userId: string; // Can be student or guest
+  userName: string;
+  amount: number;
+  month: string; // e.g., "YYYY-MM"
+  status: 'paid' | 'due';
+  method: 'razorpay' | 'cash' | 'guest_payment';
+  createdAt: number;
+}
+export interface GuestPayment {
+    id: string;
+    name: string;
+    phone: string;
+    amount: number;
+    createdAt: number;
+}
+export interface Note {
+    id: string;
+    text: string;
+    completed: boolean;
+    createdAt: number;
 }
