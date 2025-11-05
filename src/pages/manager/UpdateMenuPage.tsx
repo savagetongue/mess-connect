@@ -51,7 +51,7 @@ export function UpdateMenuPage() {
     }
   };
   return (
-    <AppLayout>
+    <AppLayout container>
       <Card>
         <CardHeader>
           <CardTitle>Update Weekly Menu</CardTitle>
