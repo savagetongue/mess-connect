@@ -9,6 +9,8 @@ import { AlertCircle, DollarSign } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { User, Payment, GuestPayment } from "@shared/types";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/sonner";
 interface FinancialsData {
   students: User[];
   payments: Payment[];
@@ -18,20 +20,32 @@ export function ManagerFinancialsPage() {
   const [data, setData] = useState<FinancialsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const fetchFinancials = async () => {
+    try {
+      setLoading(true);
+      const financialData = await api<FinancialsData>('/api/financials');
+      setData(financialData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch financial data.");
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchFinancials = async () => {
-      try {
-        setLoading(true);
-        const financialData = await api<FinancialsData>('/api/financials');
-        setData(financialData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch financial data.");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchFinancials();
   }, []);
+  const handleMarkAsPaid = async (studentId: string) => {
+    try {
+      await api('/api/payments/mark-as-paid', {
+        method: 'POST',
+        body: JSON.stringify({ studentId, amount: 3000 }), // Assuming a fixed amount for now
+      });
+      toast.success("Payment marked as paid successfully.");
+      fetchFinancials(); // Refresh data
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to mark as paid.");
+    }
+  };
   const currentMonthStr = format(new Date(), "yyyy-MM");
   const approvedStudents = data?.students.filter(s => s.status === 'approved') ?? [];
   const studentPaymentStatus = approvedStudents.map(student => {
@@ -73,23 +87,27 @@ export function ManagerFinancialsPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Student Name</TableHead>
-                        <TableHead>Email</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {studentPaymentStatus.map(student => (
                         <TableRow key={student.id}>
                           <TableCell className="font-medium">{student.name}</TableCell>
-                          <TableCell>{student.id}</TableCell>
                           <TableCell>
                             <Badge variant={student.paymentStatus === 'Paid' ? 'default' : 'destructive'}>
                               {student.paymentStatus}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            {student.paymentStatus === 'Paid' ? `₹${student.amountPaid}` : '-'}
+                            {student.paymentStatus === 'Due' ? (
+                              <Button size="sm" onClick={() => handleMarkAsPaid(student.id)}>
+                                Mark as Paid (Cash)
+                              </Button>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">Paid ₹{student.amountPaid}</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
