@@ -19,6 +19,7 @@ import { ManagerFinancialsPage } from '@/pages/manager/ManagerFinancialsPage';
 import { ManagerFeedbackPage } from '@/pages/manager/ManagerFeedbackPage';
 import { ManagerNotesPage } from '@/pages/manager/ManagerNotesPage';
 import { ManagerBroadcastPage } from '@/pages/manager/ManagerBroadcastPage';
+import { ManagerSettingsPage } from '@/pages/manager/ManagerSettingsPage';
 // Admin Pages
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 // Layout & Auth
@@ -44,6 +45,7 @@ export function App() {
     { path: "/manager/feedback", element: <ProtectedRoute role="manager"><ManagerFeedbackPage /></ProtectedRoute> },
     { path: "/manager/notes", element: <ProtectedRoute role="manager"><ManagerNotesPage /></ProtectedRoute> },
     { path: "/manager/broadcast", element: <ProtectedRoute role="manager"><ManagerBroadcastPage /></ProtectedRoute> },
+    { path: "/manager/settings", element: <ProtectedRoute role="manager"><ManagerSettingsPage /></ProtectedRoute> },
     // Admin Routes
     { path: "/admin/dashboard", element: <ProtectedRoute role="admin"><AdminDashboardPage /></ProtectedRoute> },
   ]);

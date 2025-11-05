@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity } from "./entities";
-import { ok, bad, notFound } from './core-utils';
+import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity, SuggestionEntity } from "./entities";
+import { ok, bad, notFound, Index } from './core-utils';
 import { z } from 'zod';
 import type { User, WeeklyMenu, Complaint, Note } from "@shared/types";
 type HonoVariables = {
@@ -165,6 +165,23 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         await studentEntity.patch({ status: 'approved' });
         return ok(c, { message: 'Student approved successfully.' });
     });
+    app.post('/api/students/:id/reject', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const studentId = c.req.param('id');
+        const studentEntity = new UserEntity(c.env, studentId);
+        if (!await studentEntity.exists()) return notFound(c, 'Student not found.');
+        await studentEntity.patch({ status: 'rejected' });
+        return ok(c, { message: 'Student rejected successfully.' });
+    });
+    app.delete('/api/students/:id', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const studentId = c.req.param('id');
+        const deleted = await UserEntity.delete(c.env, studentId);
+        if (!deleted) return notFound(c, 'Student not found.');
+        return ok(c, { message: 'Student deleted successfully.' });
+    });
     app.put('/api/menu', async (c) => {
         const user = c.get('user');
         if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
@@ -210,5 +227,16 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const deleted = await NoteEntity.delete(c.env, noteId);
         if (!deleted) return notFound(c, 'Note not found.');
         return ok(c, { message: 'Note deleted successfully.' });
+    });
+    // Manager Settings
+    app.post('/api/settings/clear-all-data', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const entityClasses = [UserEntity, ComplaintEntity, SuggestionEntity, MenuEntity, PaymentEntity, GuestPaymentEntity, NoteEntity];
+        for (const EntityClass of entityClasses) {
+            const index = new Index(c.env, EntityClass.indexName);
+            await index.clear();
+        }
+        return ok(c, { message: 'All application data has been cleared.' });
     });
 }
