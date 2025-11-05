@@ -167,7 +167,7 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
         const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = c.env;
         if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
-            return bad(c, 'Razorpay credentials are not configured.');
+            return bad(c, "Razorpay credentials are not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your worker's environment variables.");
         }
         const options = {
             amount: validation.data.amount * 100, // amount in the smallest currency unit
