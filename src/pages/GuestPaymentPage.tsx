@@ -57,7 +57,14 @@ export function GuestPaymentPage() {
             form.reset();
           } catch (verifyError: any) {
             toast.error(verifyError.message || 'Payment verification failed.');
+          } finally {
+            setIsLoading(false);
           }
+        },
+        modal: {
+          ondismiss: function () {
+            setIsLoading(false);
+          },
         },
         prefill: {
           name: values.name,
@@ -71,7 +78,6 @@ export function GuestPaymentPage() {
       rzp.open();
     } catch (error: any) {
       toast.error(error.message || 'Failed to create payment order.');
-    } finally {
       setIsLoading(false);
     }
   };
