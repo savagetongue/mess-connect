@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { Buffer } from 'node:buffer';
 import type { Env } from './core-utils';
 import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity, SuggestionEntity, SettingEntity, NotificationEntity } from "./entities";
 import { ok, bad, notFound, Index } from './core-utils';
@@ -180,7 +179,7 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64')}`
+                    'Authorization': `Basic ${btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`)}`
                 },
                 body: JSON.stringify(options)
             });
@@ -213,7 +212,7 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
                 ['sign']
             );
             const signatureBuffer = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(text));
-            const generated_signature = Buffer.from(signatureBuffer).toString('hex');
+            const generated_signature = Array.from(new Uint8Array(signatureBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
             if (generated_signature !== razorpay_signature) {
                 return bad(c, 'Payment verification failed. Signature mismatch.');
             }
