@@ -70,11 +70,13 @@ export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                    <a href="#"><Settings /> <span>Settings</span></a>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+            {userRole === 'manager' && (
+              <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                      <a href="/manager/settings"><Settings /> <span>Settings</span></a>
+                  </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
             <SidebarMenuItem>
                 <SidebarMenuButton onClick={logout}>
                     <LogOut /> <span>Logout</span>
