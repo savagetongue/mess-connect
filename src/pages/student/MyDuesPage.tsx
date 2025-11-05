@@ -12,22 +12,29 @@ import type { Payment } from "@shared/types";
 import { format } from "date-fns";
 export function MyDuesPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [monthlyFee, setMonthlyFee] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    const fetchDues = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await api<{ payments: Payment[] }>('/api/student/dues');
-        setPayments(data.payments.sort((a, b) => b.createdAt - a.createdAt));
+        const [duesData, feeData] = await Promise.all([
+          api<{ payments: Payment[] }>('/api/student/dues'),
+          api<{ monthlyFee: number }>('/api/settings/fee')
+        ]);
+        setPayments(duesData.payments.sort((a, b) => b.createdAt - a.createdAt));
+        setMonthlyFee(feeData.monthlyFee);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch payment history.");
       } finally {
         setLoading(false);
       }
     };
-    fetchDues();
+    fetchData();
   }, []);
+  const currentMonthStr = format(new Date(), "yyyy-MM");
+  const isCurrentMonthPaid = payments.some(p => p.month === currentMonthStr && p.status === 'paid');
   return (
     <AppLayout container>
       <Card>
@@ -39,9 +46,15 @@ export function MyDuesPage() {
           <div className="mb-6 p-4 border rounded-lg flex justify-between items-center bg-muted/50">
             <div>
               <p className="text-sm text-muted-foreground">Current Month Due</p>
-              <p className="text-2xl font-bold">₹3,000.00</p>
+              {loading ? (
+                <Skeleton className="h-8 w-32 mt-1" />
+              ) : isCurrentMonthPaid ? (
+                <p className="text-2xl font-bold text-green-600">Paid</p>
+              ) : (
+                <p className="text-2xl font-bold">₹{monthlyFee?.toLocaleString() ?? '...'}</p>
+              )}
             </div>
-            <Button disabled>Pay Now (Coming Soon)</Button>
+            <Button disabled>Pay Now (Razorpay Coming Soon)</Button>
           </div>
           <h3 className="text-lg font-semibold mb-2">Payment History</h3>
           {loading ? (

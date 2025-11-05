@@ -62,3 +62,7 @@ export interface Note {
     completed: boolean;
     createdAt: number;
 }
+export interface Setting {
+    id: 'singleton';
+    monthlyFee: number;
+}
