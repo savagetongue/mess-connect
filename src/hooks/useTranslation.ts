@@ -1,6 +1,6 @@
 import { useContext } from 'react';
-import { I18nContext } from '@/lib/i18n';
-import type { I18nContextType } from '@/lib/i18n';
+import { I18nContext } from '@/contexts/I18nContext';
+import type { I18nContextType } from '@/contexts/I18nContext';
 export const useTranslation = (): I18nContextType => {
   const context = useContext(I18nContext);
   if (!context) {
