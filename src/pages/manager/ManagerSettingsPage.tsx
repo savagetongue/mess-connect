@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Save } from "lucide-react";
+import { Trash2, Save, BookOpen } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,26 +27,35 @@ const feeSchema = z.object({
   monthlyFee: z.coerce.number().positive({ message: "Fee must be a positive number." }),
 });
 type FeeFormValues = z.infer<typeof feeSchema>;
+const rulesSchema = z.object({
+  messRules: z.string().min(10, { message: "Rules must be at least 10 characters." }),
+});
+type RulesFormValues = z.infer<typeof rulesSchema>;
 export function ManagerSettingsPage() {
   const [isClearing, setIsClearing] = useState(false);
   const logout = useAuth(s => s.logout);
-  const form = useForm<FeeFormValues>({
+  const feeForm = useForm<FeeFormValues>({
     resolver: zodResolver(feeSchema),
-    defaultValues: {
-      monthlyFee: undefined,
-    },
+    defaultValues: { monthlyFee: undefined },
+  });
+  const rulesForm = useForm<RulesFormValues>({
+    resolver: zodResolver(rulesSchema),
+    defaultValues: { messRules: "" },
   });
   useEffect(() => {
-    const fetchFee = async () => {
+    const fetchSettings = async () => {
       try {
-        const data = await api<{ monthlyFee: number }>('/api/settings/fee');
-        form.setValue('monthlyFee', data.monthlyFee);
+        const data = await api<{ monthlyFee: number; messRules?: string }>('/api/settings');
+        feeForm.setValue('monthlyFee', data.monthlyFee);
+        if (data.messRules) {
+          rulesForm.setValue('messRules', data.messRules);
+        }
       } catch (error) {
-        toast.error("Failed to load current monthly fee.");
+        toast.error("Failed to load current settings.");
       }
     };
-    fetchFee();
-  }, [form]);
+    fetchSettings();
+  }, [feeForm, rulesForm]);
   const onFeeSubmit = async (values: FeeFormValues) => {
     try {
       await api('/api/settings/fee', {
@@ -55,6 +65,17 @@ export function ManagerSettingsPage() {
       toast.success("Monthly fee updated successfully.");
     } catch (error: any) {
       toast.error(error.message || "Failed to update fee.");
+    }
+  };
+  const onRulesSubmit = async (values: RulesFormValues) => {
+    try {
+      await api('/api/settings/rules', {
+        method: 'POST',
+        body: JSON.stringify(values),
+      });
+      toast.success("Mess rules updated successfully.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update rules.");
     }
   };
   const handleClearData = async () => {
@@ -81,41 +102,76 @@ export function ManagerSettingsPage() {
             <CardDescription>Manage application-wide settings.</CardDescription>
           </CardHeader>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Financial Settings</CardTitle>
-            <CardDescription>Set the standard monthly fee for all students.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onFeeSubmit)} className="space-y-4 max-w-sm">
-                <FormField
-                  control={form.control}
-                  name="monthlyFee"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Monthly Mess Fee (₹)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="e.g., 3000"
-                          {...field}
-                          onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
-                          value={field.value ?? ''}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  <Save className="mr-2 h-4 w-4" />
-                  {form.formState.isSubmitting ? "Saving..." : "Save Fee"}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+        <div className="grid md:grid-cols-2 gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Financial Settings</CardTitle>
+              <CardDescription>Set the standard monthly fee for all students.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...feeForm}>
+                <form onSubmit={feeForm.handleSubmit(onFeeSubmit)} className="space-y-4">
+                  <FormField
+                    control={feeForm.control}
+                    name="monthlyFee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Monthly Mess Fee (₹)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="e.g., 3000"
+                            {...field}
+                            onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={feeForm.formState.isSubmitting}>
+                    <Save className="mr-2 h-4 w-4" />
+                    {feeForm.formState.isSubmitting ? "Saving..." : "Save Fee"}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Mess Rules</CardTitle>
+              <CardDescription>Set the rules and regulations for the mess.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...rulesForm}>
+                <form onSubmit={rulesForm.handleSubmit(onRulesSubmit)} className="space-y-4">
+                  <FormField
+                    control={rulesForm.control}
+                    name="messRules"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Rules</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Enter mess rules here. Each rule on a new line."
+                            rows={8}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={rulesForm.formState.isSubmitting}>
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    {rulesForm.formState.isSubmitting ? "Saving..." : "Save Rules"}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
         <Card className="border-destructive">
           <CardHeader>
             <CardTitle>Danger Zone</CardTitle>

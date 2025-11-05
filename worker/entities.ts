@@ -57,7 +57,7 @@ export class NoteEntity extends IndexedEntity<Note> {
 export class SettingEntity extends IndexedEntity<Setting> {
     static readonly entityName = "setting";
     static readonly indexName = "settings";
-    static readonly initialState: Setting = { id: 'singleton', monthlyFee: 3000 };
+    static readonly initialState: Setting = { id: 'singleton', monthlyFee: 3000, messRules: "" };
 }
 // NOTIFICATION ENTITY
 export class NotificationEntity extends IndexedEntity<Notification> {

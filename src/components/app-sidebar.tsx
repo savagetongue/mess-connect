@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, User, Settings, LogOut, Utensils, ShieldCheck, FileText, Lightbulb, DollarSign, Notebook, Users, Send, Bell } from "lucide-react";
+import { Home, User, Settings, LogOut, Utensils, ShieldCheck, FileText, Lightbulb, DollarSign, Notebook, Users, Send, Bell, BookOpen } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +26,7 @@ export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
           { href: "/student/complaints", icon: <FileText />, label: "Complaints" },
           { href: "/student/suggestions", icon: <Lightbulb />, label: "Suggestions" },
           { href: "/student/notifications", icon: <Bell />, label: "Notifications" },
+          { href: "/student/rules", icon: <BookOpen />, label: "Mess Rules" },
         ];
       case 'manager':
         return [

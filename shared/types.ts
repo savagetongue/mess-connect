@@ -65,6 +65,7 @@ export interface Note {
 export interface Setting {
     id: 'singleton';
     monthlyFee: number;
+    messRules?: string;
 }
 export interface Notification {
     id: string;

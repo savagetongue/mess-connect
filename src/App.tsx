@@ -12,6 +12,7 @@ import { MyDuesPage } from '@/pages/student/MyDuesPage';
 import { ComplaintsPage } from '@/pages/student/ComplaintsPage';
 import { SuggestionsPage } from '@/pages/student/SuggestionsPage';
 import { NotificationsPage } from '@/pages/student/NotificationsPage';
+import { MessRulesPage } from '@/pages/student/MessRulesPage';
 // Manager Pages
 import { ManagerDashboardPage } from '@/pages/manager/ManagerDashboardPage';
 import { StudentManagementPage } from '@/pages/manager/StudentManagementPage';
@@ -41,6 +42,7 @@ export function App() {
     { path: "/student/complaints", element: <ProtectedRoute role="student"><ComplaintsPage /></ProtectedRoute> },
     { path: "/student/suggestions", element: <ProtectedRoute role="student"><SuggestionsPage /></ProtectedRoute> },
     { path: "/student/notifications", element: <ProtectedRoute role="student"><NotificationsPage /></ProtectedRoute> },
+    { path: "/student/rules", element: <ProtectedRoute role="student"><MessRulesPage /></ProtectedRoute> },
     // Manager Routes
     { path: "/manager/dashboard", element: <ProtectedRoute role="manager"><ManagerDashboardPage /></ProtectedRoute> },
     { path: "/manager/students", element: <ProtectedRoute role="manager"><StudentManagementPage /></ProtectedRoute> },

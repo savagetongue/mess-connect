@@ -58,6 +58,9 @@ const MarkAsPaidSchema = z.object({
 const FeeSchema = z.object({
     monthlyFee: z.number().positive("Fee must be a positive number."),
 });
+const RulesSchema = z.object({
+    messRules: z.string().min(10, "Rules must be at least 10 characters."),
+});
 const CreateOrderSchema = z.object({
     amount: z.number().positive(),
     name: z.string().optional(), // For guest
@@ -164,7 +167,7 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const suggestion = await SuggestionEntity.create(c.env, { id: crypto.randomUUID(), studentId: user.id, studentName: user.name, text, createdAt: Date.now() });
         return ok(c, suggestion);
     });
-    app.get('/api/settings/fee', async (c) => {
+    app.get('/api/settings', async (c) => {
         const user = c.get('user');
         if (!user) return c.json({ success: false, error: 'Unauthorized' }, 401);
         const settingEntity = new SettingEntity(c.env, 'singleton');
@@ -172,7 +175,7 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
             await settingEntity.save(SettingEntity.initialState);
         }
         const settings = await settingEntity.getState();
-        return ok(c, { monthlyFee: settings.monthlyFee });
+        return ok(c, { monthlyFee: settings.monthlyFee, messRules: settings.messRules });
     });
     // PAYMENT FLOW
     app.post('/api/payments/create-order', async (c) => {
@@ -496,6 +499,16 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const settingEntity = new SettingEntity(c.env, 'singleton');
         await settingEntity.patch({ monthlyFee: validation.data.monthlyFee });
         return ok(c, { message: 'Monthly fee updated successfully.' });
+    });
+    app.post('/api/settings/rules', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const body = await c.req.json();
+        const validation = RulesSchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        const settingEntity = new SettingEntity(c.env, 'singleton');
+        await settingEntity.patch({ messRules: validation.data.messRules });
+        return ok(c, { message: 'Mess rules updated successfully.' });
     });
     // New Manager Routes
     app.post('/api/broadcast', async (c) => {
