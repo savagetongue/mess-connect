@@ -2,9 +2,8 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { userRoutes } from './user-routes';
+import { userRoutes, HonoVariables } from './user-routes';
 import { Env, GlobalDurableObject } from './core-utils';
-import type { User } from '@shared/types';
 // Need to export GlobalDurableObject to make it available in wrangler
 export { GlobalDurableObject };
 export interface ClientErrorReport {
@@ -21,9 +20,6 @@ export interface ClientErrorReport {
     colno?: number;
     error?: unknown;
   }
-type HonoVariables = {
-    user?: User;
-};
 const app = new Hono<{ Bindings: Env, Variables: HonoVariables }>();
 app.use('*', logger());
 app.use('/api/*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization'] }));
