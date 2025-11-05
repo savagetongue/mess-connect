@@ -54,6 +54,8 @@ export function ManagerFeedbackPage() {
       setIsReplying(false);
     }
   };
+  // Defensive check in case the complaint is deleted while the dialog is open
+  const complaintInDialog = selectedComplaint ? complaints.find(c => c.id === selectedComplaint.id) : null;
   return (
     <AppLayout container>
       <Card>
@@ -111,56 +113,60 @@ export function ManagerFeedbackPage() {
           )}
         </CardContent>
       </Card>
-      <Dialog open={!!selectedComplaint} onOpenChange={(isOpen) => !isOpen && setSelectedComplaint(null)}>
+      <Dialog open={!!complaintInDialog} onOpenChange={(isOpen) => !isOpen && setSelectedComplaint(null)}>
         <DialogContent className="sm:max-w-[525px]">
-          <DialogHeader>
-            <DialogTitle>Complaint Details</DialogTitle>
-            <DialogDescription>From: {selectedComplaint?.studentName}</DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div>
-              <Label className="font-semibold">Complaint:</Label>
-              <p className="text-sm text-muted-foreground p-2 border rounded-md bg-muted">{selectedComplaint?.text}</p>
-            </div>
-            {selectedComplaint?.imageUrl && (
-              <div>
-                <Label className="font-semibold">Attached Image:</Label>
-                <div className="mt-2 w-full rounded-md overflow-hidden border">
-                  <AspectRatio ratio={16 / 9}>
-                    <img
-                      src={selectedComplaint.imageUrl}
-                      alt="Complaint attachment"
-                      className="object-cover w-full h-full"
+          {complaintInDialog && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Complaint Details</DialogTitle>
+                <DialogDescription>From: {complaintInDialog.studentName}</DialogDescription>
+              </DialogHeader>
+              <div className="py-4 space-y-4">
+                <div>
+                  <Label className="font-semibold">Complaint:</Label>
+                  <p className="text-sm text-muted-foreground p-2 border rounded-md bg-muted">{complaintInDialog.text}</p>
+                </div>
+                {complaintInDialog.imageUrl && (
+                  <div>
+                    <Label className="font-semibold">Attached Image:</Label>
+                    <div className="mt-2 w-full rounded-md overflow-hidden border">
+                      <AspectRatio ratio={16 / 9}>
+                        <img
+                          src={complaintInDialog.imageUrl}
+                          alt="Complaint attachment"
+                          className="object-cover w-full h-full"
+                        />
+                      </AspectRatio>
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="reply" className="font-semibold">Your Reply:</Label>
+                  {complaintInDialog.reply ? (
+                     <p className="text-sm text-muted-foreground p-2 border rounded-md bg-muted">{complaintInDialog.reply}</p>
+                  ) : (
+                    <Textarea
+                      id="reply"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="Type your reply here..."
+                      rows={4}
                     />
-                  </AspectRatio>
+                  )}
                 </div>
               </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="reply" className="font-semibold">Your Reply:</Label>
-              {selectedComplaint?.reply ? (
-                 <p className="text-sm text-muted-foreground p-2 border rounded-md bg-muted">{selectedComplaint.reply}</p>
-              ) : (
-                <Textarea
-                  id="reply"
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Type your reply here..."
-                  rows={4}
-                />
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Close</Button>
-            </DialogClose>
-            {!selectedComplaint?.reply && (
-              <Button onClick={handleReplySubmit} disabled={isReplying}>
-                {isReplying ? "Sending..." : "Send Reply"}
-              </Button>
-            )}
-          </DialogFooter>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Close</Button>
+                </DialogClose>
+                {!complaintInDialog.reply && (
+                  <Button onClick={handleReplySubmit} disabled={isReplying}>
+                    {isReplying ? "Sending..." : "Send Reply"}
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </AppLayout>
