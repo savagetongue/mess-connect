@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity } from "./entities";
+import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity } from "./entities";
 import { ok, bad, notFound } from './core-utils';
 import { z } from 'zod';
-import type { User, WeeklyMenu, Complaint } from "@shared/types";
+import type { User, WeeklyMenu, Complaint, Note } from "@shared/types";
 type HonoVariables = {
     user?: User;
 };
@@ -38,7 +38,13 @@ const MenuSchema = z.object({
         dinner: z.string(),
     })).length(7),
 });
-const getUser = async (c: Hono.Context<{ Bindings: Env, Variables: HonoVariables }>, next: Hono.Next) => {
+const NoteSchema = z.object({
+    text: z.string().min(1, "Note cannot be empty."),
+});
+const UpdateNoteSchema = z.object({
+    completed: z.boolean(),
+});
+const getUser = async (c: any, next: any) => {
     const authHeader = c.req.header('Authorization');
     if (authHeader && authHeader.startsWith('Bearer fake-token-for-')) {
         const email = authHeader.substring('Bearer fake-token-for-'.length);
@@ -168,5 +174,41 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const menuEntity = new MenuEntity(c.env, 'singleton');
         await menuEntity.save(validation.data as WeeklyMenu);
         return ok(c, await menuEntity.getState());
+    });
+    // Manager Notes Routes
+    app.get('/api/notes', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const allNotes = (await NoteEntity.list(c.env)).items;
+        return ok(c, { notes: allNotes });
+    });
+    app.post('/api/notes', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const body = await c.req.json();
+        const validation = NoteSchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        const note = await NoteEntity.create(c.env, { id: crypto.randomUUID(), text: validation.data.text, completed: false, createdAt: Date.now() });
+        return ok(c, note);
+    });
+    app.put('/api/notes/:id', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const noteId = c.req.param('id');
+        const body = await c.req.json();
+        const validation = UpdateNoteSchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        const noteEntity = new NoteEntity(c.env, noteId);
+        if (!await noteEntity.exists()) return notFound(c, 'Note not found.');
+        await noteEntity.patch({ completed: validation.data.completed });
+        return ok(c, await noteEntity.getState());
+    });
+    app.delete('/api/notes/:id', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const noteId = c.req.param('id');
+        const deleted = await NoteEntity.delete(c.env, noteId);
+        if (!deleted) return notFound(c, 'Note not found.');
+        return ok(c, { message: 'Note deleted successfully.' });
     });
 }
