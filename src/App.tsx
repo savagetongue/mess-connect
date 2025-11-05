@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
+import { I18nProvider } from '@/lib/i18n';
 // Page Imports
 import { HomePage } from '@/pages/HomePage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -57,5 +58,9 @@ export function App() {
     { path: "/admin/dashboard", element: <ProtectedRoute role="admin"><AdminDashboardPage /></ProtectedRoute> },
     { path: "/admin/menu", element: <ProtectedRoute role="admin"><AdminMenuPage /></ProtectedRoute> },
   ]);
-  return <RouterProvider router={router} />;
+  return (
+    <I18nProvider>
+      <RouterProvider router={router} />
+    </I18nProvider>
+  );
 }
