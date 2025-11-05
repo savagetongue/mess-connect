@@ -4,42 +4,40 @@ import { Button } from "@/components/ui/button";
 import { Utensils, DollarSign, FileText, Lightbulb, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useTranslation } from "@/hooks/useTranslation";
+const dashboardItems = [
+  {
+    title: "Weekly Menu",
+    description: "Check out what's cooking this week.",
+    icon: <Utensils className="h-6 w-6 text-orange-500" />,
+    link: "/student/menu",
+  },
+  {
+    title: "My Dues",
+    description: "View your payment history and current dues.",
+    icon: <DollarSign className="h-6 w-6 text-green-500" />,
+    link: "/student/dues",
+  },
+  {
+    title: "Raise a Complaint",
+    description: "Facing an issue? Let us know.",
+    icon: <FileText className="h-6 w-6 text-red-500" />,
+    link: "/student/complaints",
+  },
+  {
+    title: "Give a Suggestion",
+    description: "Have an idea to improve our service?",
+    icon: <Lightbulb className="h-6 w-6 text-yellow-500" />,
+    link: "/student/suggestions",
+  },
+];
 export function StudentDashboardPage() {
   const user = useAuth(s => s.user);
-  const { t } = useTranslation();
-  const dashboardItems = [
-    {
-      title: t('dashboardItem_weeklyMenu_title'),
-      description: t('dashboardItem_weeklyMenu_description'),
-      icon: <Utensils className="h-6 w-6 text-orange-500" />,
-      link: "/student/menu",
-    },
-    {
-      title: t('dashboardItem_myDues_title'),
-      description: t('dashboardItem_myDues_description'),
-      icon: <DollarSign className="h-6 w-6 text-green-500" />,
-      link: "/student/dues",
-    },
-    {
-      title: t('dashboardItem_raiseComplaint_title'),
-      description: t('dashboardItem_raiseComplaint_description'),
-      icon: <FileText className="h-6 w-6 text-red-500" />,
-      link: "/student/complaints",
-    },
-    {
-      title: t('dashboardItem_giveSuggestion_title'),
-      description: t('dashboardItem_giveSuggestion_description'),
-      icon: <Lightbulb className="h-6 w-6 text-yellow-500" />,
-      link: "/student/suggestions",
-    },
-  ];
   return (
     <AppLayout container>
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold">{t('welcomeUser', { name: user?.name || '' })}</h1>
-          <p className="text-muted-foreground">{t('studentDashboardDescription')}</p>
+          <h1 className="text-3xl font-bold">Welcome, {user?.name}!</h1>
+          <p className="text-muted-foreground">Here's a quick overview of your mess account.</p>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           {dashboardItems.map((item) => (
@@ -56,7 +54,7 @@ export function StudentDashboardPage() {
               <CardContent>
                 <Button asChild variant="outline" className="w-full">
                   <Link to={item.link}>
-                    {t('goToPage', { page: item.title })} <ArrowRight className="ml-2 h-4 w-4" />
+                    Go to {item.title} <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </CardContent>
