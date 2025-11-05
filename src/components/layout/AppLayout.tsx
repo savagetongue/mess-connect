@@ -26,7 +26,7 @@ export function AppLayout({ children, container = false, className, contentClass
             )}
           </main>
           <footer className="py-4 px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
-            By @anandbhagyawant
+            <p>© 2024 Mess Connect. All rights reserved.</p>
           </footer>
         </div>
       </SidebarInset>
