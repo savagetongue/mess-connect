@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Buffer } from 'node:buffer';
 import type { Env } from './core-utils';
 import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity, SuggestionEntity, SettingEntity, NotificationEntity } from "./entities";
 import { ok, bad, notFound, Index } from './core-utils';
@@ -165,46 +166,97 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const body = await c.req.json();
         const validation = CreateOrderSchema.safeParse(body);
         if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
-        // In a real app, you would call Razorpay's Orders API here.
-        // We will simulate it by creating a mock order ID.
-        const mockOrder = {
-            id: `order_${crypto.randomUUID()}`,
-            amount: validation.data.amount * 100, // Razorpay expects amount in paise
-            currency: 'INR',
+
+        const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = c.env;
+        if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+            return bad(c, 'Razorpay credentials are not configured.');
+        }
+
+        const options = {
+            amount: validation.data.amount * 100, // amount in the smallest currency unit
+            currency: "INR",
+            receipt: `receipt_${crypto.randomUUID()}`
         };
-        return ok(c, mockOrder);
+
+        try {
+            const response = await fetch('https://api.razorpay.com/v1/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64')}`
+                },
+                body: JSON.stringify(options)
+            });
+
+            const order = await response.json();
+            if (!response.ok) {
+                return bad(c, order.error?.description || 'Failed to create Razorpay order.');
+            }
+            return ok(c, order);
+        } catch (error) {
+            console.error('Razorpay order creation error:', error);
+            return bad(c, 'An error occurred while creating the payment order.');
+        }
     });
     app.post('/api/payments/verify-payment', async (c) => {
         const body = await c.req.json();
         const validation = VerifyPaymentSchema.safeParse(body);
         if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
-        // In a real app, you would verify the signature here.
-        // We will simulate success and create the payment record.
-        const { amount, name, phone, studentId } = validation.data;
-        if (studentId) {
-            const student = await new UserEntity(c.env, studentId).getState();
-            const payment = await PaymentEntity.create(c.env, {
-                id: crypto.randomUUID(),
-                userId: studentId,
-                userName: student.name,
-                amount,
-                month: format(new Date(), "yyyy-MM"),
-                status: 'paid',
-                method: 'razorpay',
-                createdAt: Date.now(),
-            });
-            return ok(c, { status: 'success', payment });
-        } else if (name && phone) {
-            const guestPayment = await GuestPaymentEntity.create(c.env, {
-                id: crypto.randomUUID(),
-                name,
-                phone,
-                amount,
-                createdAt: Date.now(),
-            });
-            return ok(c, { status: 'success', payment: guestPayment });
+
+        const { RAZORPAY_KEY_SECRET } = c.env;
+        if (!RAZORPAY_KEY_SECRET) {
+            return bad(c, 'Razorpay secret is not configured.');
         }
-        return bad(c, 'Invalid payment details');
+
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount, name, phone, studentId } = validation.data;
+
+        const text = `${razorpay_order_id}|${razorpay_payment_id}`;
+        
+        try {
+            const key = await crypto.subtle.importKey(
+                'raw',
+                new TextEncoder().encode(RAZORPAY_KEY_SECRET),
+                { name: 'HMAC', hash: 'SHA-256' },
+                false,
+                ['sign']
+            );
+            const signatureBuffer = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(text));
+            const generated_signature = Buffer.from(signatureBuffer).toString('hex');
+
+            if (generated_signature !== razorpay_signature) {
+                return bad(c, 'Payment verification failed. Signature mismatch.');
+            }
+
+            // Signature is valid, proceed to create payment record
+            if (studentId) {
+                const student = await new UserEntity(c.env, studentId).getState();
+                const payment = await PaymentEntity.create(c.env, {
+                    id: crypto.randomUUID(),
+                    userId: studentId,
+                    userName: student.name,
+                    amount,
+                    month: format(new Date(), "yyyy-MM"),
+                    status: 'paid',
+                    method: 'razorpay',
+                    createdAt: Date.now(),
+                });
+                return ok(c, { status: 'success', payment });
+            } else if (name && phone) {
+                const guestPayment = await GuestPaymentEntity.create(c.env, {
+                    id: crypto.randomUUID(),
+                    name,
+                    phone,
+                    amount,
+                    createdAt: Date.now(),
+                });
+                return ok(c, { status: 'success', payment: guestPayment });
+            }
+            return bad(c, 'Invalid payment details');
+
+        } catch (error) {
+            console.error('Payment verification error:', error);
+            return bad(c, 'An error occurred during payment verification.');
+        }
     });
     // STUDENT ROUTES
     app.get('/api/student/dues', async (c) => {
