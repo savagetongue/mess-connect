@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ export function GuestPaymentPage() {
     resolver: zodResolver(guestPaymentSchema),
     defaultValues: { name: '', phone: '', amount: undefined },
   });
-  const onSubmit: SubmitHandler<GuestPaymentFormValues> = async (values) => {
+  const onSubmit = async (values: GuestPaymentFormValues) => {
     setIsLoading(true);
     try {
       const order = await api<{ id: string; amount: number; currency: string }>('/api/payments/create-order', {

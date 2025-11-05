@@ -126,13 +126,13 @@ export function ManagerFeedbackPage() {
                   <Label className="font-semibold">Complaint:</Label>
                   <p className="text-sm text-muted-foreground p-2 border rounded-md bg-muted">{complaintInDialog.text}</p>
                 </div>
-                {complaintInDialog.imageUrl && (
+                {complaintInDialog.imageBase64 && (
                   <div>
                     <Label className="font-semibold">Attached Image:</Label>
                     <div className="mt-2 w-full rounded-md overflow-hidden border">
                       <AspectRatio ratio={16 / 9}>
                         <img
-                          src={complaintInDialog.imageUrl}
+                          src={complaintInDialog.imageBase64}
                           alt="Complaint attachment"
                           className="object-cover w-full h-full"
                         />

@@ -18,10 +18,7 @@ const LoginSchema = z.object({
     email: z.string().email(),
     password: z.string().min(1),
 });
-const ComplaintSchema = z.object({
-    text: z.string().min(10, "Complaint must be at least 10 characters."),
-    hasImage: z.boolean().optional(),
-});
+// Complaint schema is now handled by FormData parsing
 const SuggestionSchema = z.object({
     text: z.string().min(10, "Suggestion must be at least 10 characters."),
 });
@@ -132,13 +129,26 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
     app.post('/api/complaints', async (c) => {
         const user = c.get('user');
         if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
-        const body = await c.req.json();
-        const validation = ComplaintSchema.safeParse(body);
-        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
-        const { text, hasImage } = validation.data;
-        const complaintId = crypto.randomUUID();
-        const imageUrl = hasImage ? `https://picsum.photos/seed/${complaintId}/400/300` : undefined;
-        const complaint = await ComplaintEntity.create(c.env, { id: complaintId, studentId: user.id, studentName: user.name, text, imageUrl, createdAt: Date.now() });
+        const formData = await c.req.formData();
+        const text = formData.get('text') as string;
+        const imageFile = formData.get('image') as File;
+        if (!text || text.length < 10) {
+            return bad(c, "Complaint must be at least 10 characters long.");
+        }
+        let imageBase64: string | undefined = undefined;
+        if (imageFile && imageFile.size > 0) {
+            const buffer = await imageFile.arrayBuffer();
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+            imageBase64 = `data:${imageFile.type};base64,${base64}`;
+        }
+        const complaint = await ComplaintEntity.create(c.env, {
+            id: crypto.randomUUID(),
+            studentId: user.id,
+            studentName: user.name,
+            text,
+            imageBase64,
+            createdAt: Date.now()
+        });
         return ok(c, complaint);
     });
     app.post('/api/suggestions', async (c) => {
@@ -227,7 +237,7 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
                 ['sign']
             );
             const signatureBuffer = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(text));
-            const generated_signature = Array.from(new UintArray(signatureBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+            const generated_signature = Array.from(new Uint8Array(signatureBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
             if (generated_signature !== razorpay_signature) {
                 return bad(c, 'Payment verification failed. Signature mismatch.');
             }
