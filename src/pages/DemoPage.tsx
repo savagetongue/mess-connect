@@ -5,9 +5,13 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Toaster, toast } from '@/components/ui/sonner'
-import type { User, Chat, ChatMessage } from '@shared/types'
+import type { User } from '@shared/types'
 import { api } from '@/lib/api-client'
 import { AppLayout } from '@/components/layout/AppLayout'
+
+// HACK: Define missing types locally since they were removed from @shared/types
+type Chat = any
+type ChatMessage = any
 
 export function DemoPage() {
   // Minimal state — small demo for AI to extend
