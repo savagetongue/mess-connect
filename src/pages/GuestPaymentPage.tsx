@@ -11,73 +11,32 @@ import { Toaster, toast } from '@/components/ui/sonner';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { api } from '@/lib/api-client';
 import { Utensils, ArrowLeft } from 'lucide-react';
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
 const guestPaymentSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   phone: z.string().min(10, { message: 'Please enter a valid phone number.' }),
-  amount: z.coerce.number().positive({ message: 'Amount must be a positive number.' }),
+  amount: z.coerce.number().min(1, { message: 'Amount must be at least 1.' }),
 });
 type GuestPaymentFormValues = z.infer<typeof guestPaymentSchema>;
 export function GuestPaymentPage() {
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm<GuestPaymentFormValues>({
     resolver: zodResolver(guestPaymentSchema),
-    defaultValues: { name: '', phone: '', amount: undefined },
+    defaultValues: { name: '', phone: '', amount: 0 },
   });
   const onSubmit = async (values: GuestPaymentFormValues) => {
     setIsLoading(true);
     try {
-      const order = await api<{ id: string; amount: number; currency: string }>('/api/payments/create-order', {
+      await api('/api/guest-payment', {
         method: 'POST',
-        body: JSON.stringify({ amount: values.amount, name: values.name, phone: values.phone }),
+        body: JSON.stringify(values),
       });
-      const options = {
-        key: 'rzp_test_Rc4X9qW2OGg1Ch', // Updated Key
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Mess Connect',
-        description: 'Guest Meal Payment',
-        order_id: order.id,
-        handler: async function (response: any) {
-          try {
-            await api('/api/payments/verify-payment', {
-              method: 'POST',
-              body: JSON.stringify({
-                ...response,
-                amount: values.amount,
-                name: values.name,
-                phone: values.phone,
-              }),
-            });
-            toast.success('Payment successful!', { description: 'Thank you for dining with us.' });
-            form.reset();
-          } catch (verifyError: any) {
-            toast.error(verifyError.message || 'Payment verification failed.');
-          } finally {
-            setIsLoading(false);
-          }
-        },
-        modal: {
-          ondismiss: function () {
-            setIsLoading(false);
-          },
-        },
-        prefill: {
-          name: values.name,
-          contact: values.phone,
-        },
-        theme: {
-          color: '#F97316',
-        },
-      };
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      toast.success('Payment successful!', {
+        description: 'Thank you for dining with us.',
+      });
+      form.reset();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create payment order.');
+      toast.error(error.message || 'Payment failed. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };
