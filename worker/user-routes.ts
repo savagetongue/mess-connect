@@ -5,7 +5,7 @@ import { ok, bad, notFound, Index } from './core-utils';
 import { z } from 'zod';
 import type { User, WeeklyMenu, Complaint, Note, Payment } from "@shared/types";
 import { format } from "date-fns";
-type HonoVariables = {
+export type HonoVariables = {
     user?: User;
 };
 const RegisterSchema = z.object({
