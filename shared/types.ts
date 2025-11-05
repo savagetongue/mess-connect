@@ -66,3 +66,9 @@ export interface Setting {
     id: 'singleton';
     monthlyFee: number;
 }
+export interface Notification {
+    id: string;
+    userId: string; // The student this is for
+    message: string;
+    createdAt: number;
+}

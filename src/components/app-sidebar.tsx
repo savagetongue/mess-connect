@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, User, Settings, LogOut, Utensils, ShieldCheck, FileText, Lightbulb, DollarSign, Notebook, Users, Send } from "lucide-react";
+import { Home, User, Settings, LogOut, Utensils, ShieldCheck, FileText, Lightbulb, DollarSign, Notebook, Users, Send, Bell } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +25,7 @@ export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
           { href: "/student/dues", icon: <DollarSign />, label: "My Dues" },
           { href: "/student/complaints", icon: <FileText />, label: "Complaints" },
           { href: "/student/suggestions", icon: <Lightbulb />, label: "Suggestions" },
+          { href: "/student/notifications", icon: <Bell />, label: "Notifications" },
         ];
       case 'manager':
         return [
@@ -40,7 +41,7 @@ export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
       case 'admin':
         return [
           { href: "/admin/dashboard", icon: <ShieldCheck />, label: "Oversight" },
-          { href: "/admin/dashboard", icon: <FileText />, label: "All Complaints" },
+          { href: "/admin/menu", icon: <Utensils />, label: "View Menu" },
         ];
       default:
         return [];
