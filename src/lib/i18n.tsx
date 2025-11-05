@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 type Language = 'en' | 'mr' | 'hi';
 type Translations = {
   [key: string]: {
@@ -166,22 +166,22 @@ const translations: Translations = {
     studentLoginTitle: 'विद्यार्थी लॉगिन',
     managerLoginTitle: 'व्यवस्थापक लॉगिन',
     adminLoginTitle: 'प्रशासक लॉगिन',
-    loginDescription: 'तुमच्या डॅशबो��्डवर प्रवेश करण्यासाठी तुमचे क्रेडेन्शियल्स प्रविष्ट करा.',
+    loginDescription: 'तुमच्या डॅशबोर्डवर प्रवेश करण्यासाठी तुमचे क्रेडेन्शियल्स प्रविष्ट करा.',
     emailLabel: 'ईमेल',
     emailPlaceholder: 'name@example.com',
     passwordLabel: 'पासवर्ड',
     passwordPlaceholder: '••••••••',
     signInButton: 'साइन ��न करा',
     signingInButton: 'साइन इन करत आहे...',
-    noAccount: 'खात�� नाही?',
+    noAccount: 'खाते नाही?',
     registerHere: 'येथे नोंदणी ��रा',
     guestPaymentLink: 'अतिथी म्हणून पैसे द्या',
     // RegisterPage
     registerTitle: 'विद्यार्थी नोंदणी',
-    registerDescription: 'मेसमध्ये सामील हो��्यासाठी तुमचे खाते तयार करा.',
+    registerDescription: 'मेसमध्ये सामील होण्यासाठी तुमचे खाते तयार करा.',
     fullNameLabel: 'पूर्ण नाव',
     fullNamePlaceholder: 'जॉन डो',
-    phoneLabel: 'फोन नं��र',
+    phoneLabel: 'फोन नंबर',
     phonePlaceholder: '९८७६५४३२१०',
     registerButton: 'नोंदणी करा',
     registeringButton: 'नोंदणी करत आहे...',
@@ -209,7 +209,7 @@ const translations: Translations = {
     sidebar_messRules: 'मेसचे नियम',
     sidebar_dashboard: 'डॅशबोर्ड',
     sidebar_studentManagement: 'विद्यार्थी व्यवस्थापन',
-    sidebar_updateMenu: 'मेनू अपडे�� करा',
+    sidebar_updateMenu: 'मेनू अपडेट करा',
     sidebar_financials: 'आर्थिक',
     sidebar_manager_complaints: 'तक्रारी',
     sidebar_manager_suggestions: 'सूचना',
@@ -227,13 +227,13 @@ const translations: Translations = {
     dashboardItem_myDues_title: 'माझी देयके',
     dashboardItem_myDues_description: 'तुमचा पेमेंट इतिहास आणि सध्याची देयके पहा.',
     dashboardItem_raiseComplaint_title: 'तक्रार नोंदवा',
-    dashboardItem_raiseComplaint_description: 'काही समस्या आहे का? आम्हाल��� कळवा.',
+    dashboardItem_raiseComplaint_description: 'काही समस्या आहे का? आम्हाला कळवा.',
     dashboardItem_giveSuggestion_title: 'सूचना द्या',
     dashboardItem_giveSuggestion_description: 'आमची सेवा सुधारण्यासाठी काही कल्पना आहे का?',
     goToPage: '{page} वर जा',
     // Student Weekly Menu
     weeklyMenuTitle: 'साप्ताहिक मेनू',
-    weeklyMenuDescription: 'येथे आगामी आठवड्यासाठी जेवणाची य���जना आहे.',
+    weeklyMenuDescription: 'येथे आगामी आठवड्यासाठी जेवणाची योजना आहे.',
     fetchMenuError: 'मेनू आणण्यात अयशस्वी. व्यवस्थापकाने कदाचित तो अद्याप सेट केलेला नाही.',
     // Student My Dues
     myDuesTitle: 'माझी देयके आणि पेमेंट इतिहास',
@@ -249,11 +249,11 @@ const translations: Translations = {
     submitNewComplaintDescription: 'गैरसोयीबद्दल ��म्ही दिलगीर आहोत. कृपया तुमची समस्या सांगा.',
     complaintDetailsLabel: 'तक्रारीचा तपशील',
     complaintDetailsPlaceholder: 'कृपया शक्य तितका तपशील द्या...',
-    attachImageLabel: 'एक प्रतिमा संलग��न करा (ऐच्छिक)',
+    attachImageLabel: 'एक प्रतिमा संलग्न करा (ऐच्छिक)',
     submitComplaintButton: 'तक्रार सबमिट करा',
     submittingButton: 'सबमिट करत आहे...',
     pastComplaintsTitle: 'तुमच्या मागील तक्रारी',
-    pastComplaintsDescription: 'तुम्ही ��ूर्वी सबमिट केलेल्या तक्रारींची यादी येथे आहे.',
+    pastComplaintsDescription: 'तुम्ही पूर्वी सबमिट केलेल्या तक्रारींची यादी येथे आहे.',
     noPastComplaints: 'तुमच्या कोणत्याही मागील तक्रारी नाहीत.',
     managerReply: 'व्यवस्थापकाचे उत्तर:',
     awaitingReply: 'व्यवस्थापकाकडून उत्तराची प्रतीक्षा आहे.',
@@ -268,7 +268,7 @@ const translations: Translations = {
     noPastSuggestions: 'तुमच्या कोणत्याही मागील सूचना नाहीत.',
     // Student Notifications
     notificationsTitle: 'सूचना',
-    notificationsDescription: 'व्यवस्थापकाकडून महत्त्वाचे संदेश आणि अद्य��ने.',
+    notificationsDescription: 'व्यवस्थापकाकडून महत्त्वाचे संदेश आणि अद्यतने.',
     noNotifications: 'तुमच्यासाठी कोणत्याही नवीन सूचना नाहीत.',
     // Student Mess Rules
     messRulesTitle: 'मेसचे नियम आणि विनियम',
@@ -294,11 +294,11 @@ const translations: Translations = {
     loading: 'लोड हो रहा है...',
     close: 'बंद करें',
     // HomePage
-    appSlogan: '��पका दैनिक भोजन प्रबंधन, सरलीकृत।',
+    appSlogan: 'आपका दैनिक भोजन प्रबंधन, सरलीकृत।',
     studentLoginTitle: 'छात्र लॉगिन',
     managerLoginTitle: 'प्रबंधक लॉगिन',
     adminLoginTitle: 'प्रशासक लॉगिन',
-    loginDescription: 'अपने डैशबोर्ड तक पहुंचने के ल���ए अपनी क्रेडेंशियल दर्ज करें।',
+    loginDescription: 'अपने डैशबोर्ड तक पहुंचने के लिए अपनी क्रेडेंशियल दर्ज करें।',
     emailLabel: 'ईमेल',
     emailPlaceholder: 'name@example.com',
     passwordLabel: 'पासवर्ड',
@@ -310,7 +310,7 @@ const translations: Translations = {
     guestPaymentLink: 'अतिथि के रूप में भुगतान करें',
     // RegisterPage
     registerTitle: 'छात्र पंजीकरण',
-    registerDescription: 'मेस में शामिल होने के लिए अपना खा��ा बनाएं।',
+    registerDescription: 'मेस में शामिल होने के लिए अपना खाता बनाएं।',
     fullNameLabel: 'पूरा नाम',
     fullNamePlaceholder: 'जॉन डो',
     phoneLabel: 'फ़ोन नंबर',
@@ -350,7 +350,7 @@ const translations: Translations = {
     sidebar_settings: 'सेटिंग्स',
     sidebar_logout: 'लॉगआउट',
     sidebar_admin_oversight: 'निगरानी',
-    sidebar_admin_viewMenu: 'मेन्यू देख���ं',
+    sidebar_admin_viewMenu: 'मेन्यू देखें',
     // Student Dashboard
     welcomeUser: 'स्वागत है, {name}!',
     studentDashboardDescription: 'यहाँ आपके मेस खाते का एक संक्षिप्त अवलोकन है।',
@@ -359,17 +359,17 @@ const translations: Translations = {
     dashboardItem_myDues_title: 'मेरे बकाया',
     dashboardItem_myDues_description: 'अपना भुगतान इतिहास और वर्तमान बकाया देखें।',
     dashboardItem_raiseComplaint_title: 'शिकायत दर्ज करें',
-    dashboardItem_raiseComplaint_description: 'कोई समस्या आ रही है? ह��ें बताएं।',
+    dashboardItem_raiseComplaint_description: 'कोई समस्या आ रही है? हमें बताएं।',
     dashboardItem_giveSuggestion_title: 'सुझाव दें',
     dashboardItem_giveSuggestion_description: 'हमारी सेवा को बेहतर बनाने के लिए कोई विचार है?',
     goToPage: '{page} पर जाएं',
     // Student Weekly Menu
     weeklyMenuTitle: 'साप्ताहिक मेन्यू',
-    weeklyMenuDescription: 'यहाँ आगामी सप्ताह के लिए ��ोजन योजना है।',
-    fetchMenuError: 'मेन्यू लाने में विफल��� प्रबंधक ने शायद इसे अभी तक सेट नहीं किया है।',
+    weeklyMenuDescription: 'यहाँ आगामी सप्ताह के लिए भोजन योजना है।',
+    fetchMenuError: 'मेन्यू लाने में विफल। प्रबंधक ने शायद इसे अभी तक सेट नहीं किया है।',
     // Student My Dues
     myDuesTitle: 'मेरे बकाया और भुगतान इतिहास',
-    myDuesDescription: 'अपने भुगतान इतिहास की समीक्षा करें और ब��ाया राशि का निपटान करें।',
+    myDuesDescription: 'अपने भुगतान इतिहास की समीक्षा करें और बकाया राशि का निपटान करें।',
     currentMonthDue: 'चालू माह का बकाया',
     paymentHistory: 'भुगतान इतिहास',
     month: 'महीना',
@@ -378,7 +378,7 @@ const translations: Translations = {
     noPaymentHistory: 'कोई भुगतान इतिहास नहीं मिला।',
     // Student Complaints
     submitNewComplaintTitle: '��क नई शिकायत दर्ज करें',
-    submitNewComplaintDescription: 'असुविधा के लिए हमें खेद है। कृपया ��पनी समस्या का वर्णन करें।',
+    submitNewComplaintDescription: 'असुविधा के लिए हमें खेद है। कृपया अपनी समस्या का वर्णन करें।',
     complaintDetailsLabel: 'शिकायत का विवरण',
     complaintDetailsPlaceholder: 'कृपया जित��ा संभव हो उतना विवरण प्रदान करें...',
     attachImageLabel: 'एक छवि संलग्न करें (वैकल्पिक)',
@@ -405,10 +405,10 @@ const translations: Translations = {
     // Student Mess Rules
     messRulesTitle: 'मेस के नियम और विनियम',
     messRulesDescription: 'कृपया एक सुखद भोजन वातावरण बनाए रखने के लिए ��िम्नलिखित नियमों का पालन करें।',
-    noRulesSet: 'प्रबंधक द्वारा अभी तक कोई नियम निर्धार��त नहीं किया गया है।',
+    noRulesSet: 'प्रबंधक द्वारा अभी तक कोई नियम निर्धारित नहीं किया गया है।',
   },
 };
-const I18nContext = createContext<I18nContextType | undefined>(undefined);
+export const I18nContext = createContext<I18nContextType | undefined>(undefined);
 export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const savedLang = localStorage.getItem('language') as Language;
@@ -434,11 +434,4 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </I18nContext.Provider>
   );
-};
-export const useTranslation = (): I18nContextType => {
-  const context = useContext(I18nContext);
-  if (!context) {
-    throw new Error('useTranslation must be used within an I18nProvider');
-  }
-  return context;
 };

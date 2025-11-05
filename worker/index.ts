@@ -2,7 +2,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { userRoutes, type HonoVariables } from './user-routes';
+import { userRoutes, HonoVariables } from './user-routes';
 import { Env, GlobalDurableObject } from './core-utils';
 // Need to export GlobalDurableObject to make it available in wrangler
 export { GlobalDurableObject };
