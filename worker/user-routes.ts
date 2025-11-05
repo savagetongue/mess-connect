@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity, SuggestionEntity } from "./entities";
+import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity, SuggestionEntity, SettingEntity } from "./entities";
 import { ok, bad, notFound, Index } from './core-utils';
 import { z } from 'zod';
 import type { User, WeeklyMenu, Complaint, Note, Payment } from "@shared/types";
@@ -54,6 +54,9 @@ const BroadcastSchema = z.object({
 const MarkAsPaidSchema = z.object({
     studentId: z.string(),
     amount: z.number().positive(),
+});
+const FeeSchema = z.object({
+    monthlyFee: z.number().positive("Fee must be a positive number."),
 });
 const getUser = async (c: any, next: any) => {
     const authHeader = c.req.header('Authorization');
@@ -138,6 +141,16 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const { text } = validation.data;
         const suggestion = await SuggestionEntity.create(c.env, { id: crypto.randomUUID(), studentId: user.id, studentName: user.name, text, createdAt: Date.now() });
         return ok(c, suggestion);
+    });
+    app.get('/api/settings/fee', async (c) => {
+        const user = c.get('user');
+        if (!user) return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const settingEntity = new SettingEntity(c.env, 'singleton');
+        if (!await settingEntity.exists()) {
+            await settingEntity.save(SettingEntity.initialState);
+        }
+        const settings = await settingEntity.getState();
+        return ok(c, { monthlyFee: settings.monthlyFee });
     });
     // STUDENT ROUTES
     app.get('/api/student/dues', async (c) => {
@@ -318,12 +331,22 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
     app.post('/api/settings/clear-all-data', async (c) => {
         const user = c.get('user');
         if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
-        const entityClasses = [UserEntity, ComplaintEntity, SuggestionEntity, MenuEntity, PaymentEntity, GuestPaymentEntity, NoteEntity];
+        const entityClasses = [UserEntity, ComplaintEntity, SuggestionEntity, MenuEntity, PaymentEntity, GuestPaymentEntity, NoteEntity, SettingEntity];
         for (const EntityClass of entityClasses) {
             const index = new Index(c.env, EntityClass.indexName);
             await index.clear();
         }
         return ok(c, { message: 'All application data has been cleared.' });
+    });
+    app.post('/api/settings/fee', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const body = await c.req.json();
+        const validation = FeeSchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        const settingEntity = new SettingEntity(c.env, 'singleton');
+        await settingEntity.patch({ monthlyFee: validation.data.monthlyFee });
+        return ok(c, { message: 'Monthly fee updated successfully.' });
     });
     // New Manager Routes
     app.post('/api/broadcast', async (c) => {
