@@ -39,7 +39,7 @@ export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
       case 'admin':
         return [
           { href: "/admin/dashboard", icon: <ShieldCheck />, label: "Oversight" },
-          { href: "/admin/complaints", icon: <FileText />, label: "All Complaints" },
+          { href: "/admin/dashboard", icon: <FileText />, label: "All Complaints" },
         ];
       default:
         return [];
@@ -58,8 +58,8 @@ export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
       <SidebarContent className="flex-grow">
         <SidebarGroup>
           <SidebarMenu>
-            {getNavItems().map((item) => (
-              <SidebarMenuItem key={item.href}>
+            {getNavItems().map((item, index) => (
+              <SidebarMenuItem key={`${item.href}-${index}`}>
                 <SidebarMenuButton asChild>
                   <a href={item.href}>{item.icon} <span>{item.label}</span></a>
                 </SidebarMenuButton>

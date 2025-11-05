@@ -26,11 +26,10 @@ import { ManagerFinancialsPage } from '@/pages/manager/ManagerFinancialsPage';
 import { ManagerFeedbackPage } from '@/pages/manager/ManagerFeedbackPage';
 import { ManagerNotesPage } from '@/pages/manager/ManagerNotesPage';
 import { ManagerBroadcastPage } from '@/pages/manager/ManagerBroadcastPage';
+// Admin Pages
+import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 // Layout & Auth
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { AppLayout } from './components/layout/AppLayout';
-// Placeholder Dashboard Components for other roles
-const AdminDashboard = () => <AppLayout><div>Admin Dashboard</div></AppLayout>;
 const App = () => {
   const router = createBrowserRouter([
     // Public Routes
@@ -53,7 +52,7 @@ const App = () => {
     { path: "/manager/notes", element: <ProtectedRoute role="manager"><ManagerNotesPage /></ProtectedRoute> },
     { path: "/manager/broadcast", element: <ProtectedRoute role="manager"><ManagerBroadcastPage /></ProtectedRoute> },
     // Admin Routes
-    { path: "/admin/dashboard", element: <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute> },
+    { path: "/admin/dashboard", element: <ProtectedRoute role="admin"><AdminDashboardPage /></ProtectedRoute> },
   ]);
   return <RouterProvider router={router} />;
 }
