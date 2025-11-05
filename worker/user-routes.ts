@@ -21,6 +21,9 @@ const ComplaintSchema = z.object({
     text: z.string().min(10, "Complaint must be at least 10 characters."),
     imageUrl: z.string().url().optional(),
 });
+const SuggestionSchema = z.object({
+    text: z.string().min(10, "Suggestion must be at least 10 characters."),
+});
 const ReplySchema = z.object({
     reply: z.string().min(1, "Reply cannot be empty."),
 });
@@ -117,6 +120,16 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const { text, imageUrl } = validation.data;
         const complaint = await ComplaintEntity.create(c.env, { id: crypto.randomUUID(), studentId: user.id, studentName: user.name, text, imageUrl, createdAt: Date.now() });
         return ok(c, complaint);
+    });
+    app.post('/api/suggestions', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const body = await c.req.json();
+        const validation = SuggestionSchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        const { text } = validation.data;
+        const suggestion = await SuggestionEntity.create(c.env, { id: crypto.randomUUID(), studentId: user.id, studentName: user.name, text, createdAt: Date.now() });
+        return ok(c, suggestion);
     });
     // STUDENT ROUTES
     app.get('/api/student/dues', async (c) => {
@@ -224,6 +237,24 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const payments = (await PaymentEntity.list(c.env)).items;
         const guestPayments = (await GuestPaymentEntity.list(c.env)).items;
         return ok(c, { students, payments, guestPayments });
+    });
+    app.get('/api/suggestions/all', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const allSuggestions = (await SuggestionEntity.list(c.env)).items;
+        return ok(c, { suggestions: allSuggestions });
+    });
+    app.post('/api/suggestions/:id/reply', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const suggestionId = c.req.param('id');
+        const body = await c.req.json();
+        const validation = ReplySchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        const suggestionEntity = new SuggestionEntity(c.env, suggestionId);
+        if (!await suggestionEntity.exists()) return notFound(c, 'Suggestion not found.');
+        await suggestionEntity.patch({ reply: validation.data.reply });
+        return ok(c, { message: 'Reply added successfully.' });
     });
     // Manager Notes Routes
     app.get('/api/notes', async (c) => {

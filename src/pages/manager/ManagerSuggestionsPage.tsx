@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,15 +9,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Search } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { Suggestion } from "@shared/types";
 import { toast } from "@/components/ui/sonner";
 import { format } from "date-fns";
-// This page is for managing student suggestions.
-// For complaints, please see ManagerFeedbackPage.tsx
 export function ManagerSuggestionsPage() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,8 +21,6 @@ export function ManagerSuggestionsPage() {
   const [selectedSuggestion, setSelectedSuggestion] = useState<Suggestion | null>(null);
   const [replyText, setReplyText] = useState("");
   const [isReplying, setIsReplying] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const fetchSuggestions = async () => {
     try {
       setLoading(true);
@@ -59,51 +53,12 @@ export function ManagerSuggestionsPage() {
       setIsReplying(false);
     }
   };
-  const filteredSuggestions = useMemo(() => {
-    return suggestions
-      .filter(s => {
-        if (statusFilter === 'all') return true;
-        if (statusFilter === 'pending') return !s.reply;
-        if (statusFilter === 'replied') return !!s.reply;
-        return true;
-      })
-      .filter(s =>
-        s.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.text.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-  }, [suggestions, searchTerm, statusFilter]);
   return (
     <AppLayout container>
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <CardTitle>Student Suggestions</CardTitle>
-              <CardDescription>View and respond to student suggestions. This is separate from complaints.</CardDescription>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="relative flex-grow">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search suggestions..."
-                  className="pl-8 w-full"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="replied">Replied</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <CardTitle>Student Suggestions</CardTitle>
+          <CardDescription>View and respond to student suggestions.</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -119,8 +74,8 @@ export function ManagerSuggestionsPage() {
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
             </div>
-          ) : filteredSuggestions.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No suggestions match your criteria.</p>
+          ) : suggestions.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No suggestions to show.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -133,7 +88,7 @@ export function ManagerSuggestionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSuggestions.map((suggestion) => (
+                {suggestions.map((suggestion) => (
                   <TableRow key={suggestion.id}>
                     <TableCell className="font-medium">{suggestion.studentName}</TableCell>
                     <TableCell className="max-w-sm truncate">{suggestion.text}</TableCell>
