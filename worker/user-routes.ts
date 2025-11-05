@@ -395,7 +395,10 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const entityClasses = [UserEntity, ComplaintEntity, SuggestionEntity, MenuEntity, PaymentEntity, GuestPaymentEntity, NoteEntity, SettingEntity, NotificationEntity];
         for (const EntityClass of entityClasses) {
             const index = new Index(c.env, EntityClass.indexName);
-            await index.clear();
+            const { items: ids } = await index.page(undefined, 1000); // Get all items
+            if (ids.length > 0) {
+                await EntityClass.deleteMany(c.env, ids); // This also removes from index
+            }
         }
         return ok(c, { message: 'All application data has been cleared.' });
     });
@@ -439,6 +442,12 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         if (!await studentEntity.exists()) return notFound(c, 'Student not found.');
         const student = await studentEntity.getState();
         const month = format(new Date(), "yyyy-MM");
+        // Check if already paid for this month
+        const allPayments = (await PaymentEntity.list(c.env)).items;
+        const existingPayment = allPayments.find(p => p.userId === studentId && p.month === month);
+        if (existingPayment) {
+            return bad(c, 'Student has already paid for this month.');
+        }
         const payment = await PaymentEntity.create(c.env, {
             id: crypto.randomUUID(),
             userId: studentId,

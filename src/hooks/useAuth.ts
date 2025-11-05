@@ -11,7 +11,7 @@ interface AuthState {
   logout: () => void;
   _hydrated: boolean;
 }
-export const useAuth = create<AuthState>()(
+const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
@@ -65,18 +65,17 @@ export const useAuth = create<AuthState>()(
     }
   )
 );
-// Redirect logic on initial load
-useAuth.subscribe((state, prevState) => {
+// This logic was flawed. It was redirecting managers to /student because the path check was too generic.
+// The redirection logic is now handled correctly inside the login function and by ProtectedRoute.
+// We only need to handle the case where a logged-out user tries to access a protected page.
+useAuthStore.subscribe((state, prevState) => {
   if (state._hydrated && !prevState._hydrated) {
-    const { user, token } = state;
+    const { token } = state;
     const path = window.location.pathname;
-    if (token && user) {
-      const dashboardUrl = `/${user.role}/dashboard`;
-      if (!path.startsWith(`/${user.role}`)) {
-        window.location.href = dashboardUrl;
-      }
-    } else if (!['/', '/register', '/pending-approval', '/guest-payment'].includes(path)) {
+    const publicPaths = ['/', '/register', '/pending-approval', '/guest-payment'];
+    if (!token && !publicPaths.includes(path)) {
       window.location.href = '/';
     }
   }
 });
+export const useAuth = useAuthStore;
