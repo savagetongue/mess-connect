@@ -20,7 +20,7 @@ export interface ClientErrorReport {
     colno?: number;
     error?: unknown;
   }
-const app = new Hono<{ Bindings: Env, Variables: HonoVariables }>();
+const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 app.use('*', logger());
 app.use('/api/*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization'] }));
 userRoutes(app);

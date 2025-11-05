@@ -172,7 +172,7 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const options = {
             amount: validation.data.amount * 100, // amount in the smallest currency unit
             currency: "INR",
-            receipt: `receipt_${crypto.randomUUID()}`
+            receipt: `rcpt_${Date.now()}`
         };
         try {
             const response = await fetch('https://api.razorpay.com/v1/orders', {
