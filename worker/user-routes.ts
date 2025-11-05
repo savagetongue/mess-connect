@@ -3,7 +3,7 @@ import type { Env } from './core-utils';
 import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity, SuggestionEntity } from "./entities";
 import { ok, bad, notFound, Index } from './core-utils';
 import { z } from 'zod';
-import type { User, WeeklyMenu, Complaint, Note } from "@shared/types";
+import type { User, WeeklyMenu, Complaint, Note, Payment } from "@shared/types";
 type HonoVariables = {
     user?: User;
 };
@@ -118,6 +118,14 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const complaint = await ComplaintEntity.create(c.env, { id: crypto.randomUUID(), studentId: user.id, studentName: user.name, text, imageUrl, createdAt: Date.now() });
         return ok(c, complaint);
     });
+    // STUDENT ROUTES
+    app.get('/api/student/dues', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const allPayments = (await PaymentEntity.list(c.env)).items;
+        const studentPayments = allPayments.filter(p => p.userId === user.id);
+        return ok(c, { payments: studentPayments });
+    });
     // MANAGER & ADMIN ROUTES
     app.get('/api/complaints/all', async (c) => {
         const user = c.get('user');
@@ -143,10 +151,26 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
         const allUsers = (await UserEntity.list(c.env)).items;
         const allGuestPayments = (await GuestPaymentEntity.list(c.env)).items;
+        const allStudentPayments = (await PaymentEntity.list(c.env)).items;
         const students = allUsers.filter(u => u.role === 'student');
         const totalStudents = students.filter(s => s.status === 'approved').length;
         const pendingApprovals = students.filter(s => s.status === 'pending').length;
-        const monthlyRevenue = allGuestPayments.reduce((sum, payment) => sum + payment.amount, 0);
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        const guestRevenue = allGuestPayments
+            .filter(p => {
+                const pDate = new Date(p.createdAt);
+                return pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear;
+            })
+            .reduce((sum, p) => sum + p.amount, 0);
+        const studentRevenue = allStudentPayments
+            .filter(p => {
+                const pDate = new Date(p.createdAt);
+                return pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear;
+            })
+            .reduce((sum, p) => sum + p.amount, 0);
+        const monthlyRevenue = guestRevenue + studentRevenue;
         return ok(c, { totalStudents, pendingApprovals, monthlyRevenue });
     });
     app.get('/api/students', async (c) => {
@@ -191,6 +215,15 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const menuEntity = new MenuEntity(c.env, 'singleton');
         await menuEntity.save(validation.data as WeeklyMenu);
         return ok(c, await menuEntity.getState());
+    });
+    app.get('/api/financials', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const allUsers = (await UserEntity.list(c.env)).items;
+        const students = allUsers.filter(u => u.role === 'student').map(({ passwordHash, ...rest }) => rest);
+        const payments = (await PaymentEntity.list(c.env)).items;
+        const guestPayments = (await GuestPaymentEntity.list(c.env)).items;
+        return ok(c, { students, payments, guestPayments });
     });
     // Manager Notes Routes
     app.get('/api/notes', async (c) => {
