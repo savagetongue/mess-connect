@@ -36,7 +36,7 @@ export function GuestPaymentPage() {
         body: JSON.stringify({ amount: values.amount, name: values.name, phone: values.phone }),
       });
       const options = {
-        key: 'rzp_test_RSUdCmphd81o8f', // Replace with your key
+        key: 'rzp_test_F852d26a220216', // Replace with your key
         amount: order.amount,
         currency: order.currency,
         name: 'Mess Connect',
