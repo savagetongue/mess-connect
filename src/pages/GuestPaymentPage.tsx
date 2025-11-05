@@ -26,7 +26,7 @@ export function GuestPaymentPage() {
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm<GuestPaymentFormValues>({
     resolver: zodResolver(guestPaymentSchema),
-    defaultValues: { name: '', phone: '', amount: undefined },
+    defaultValues: { name: '', phone: '', amount: '' as any },
   });
   const onSubmit = async (values: GuestPaymentFormValues) => {
     setIsLoading(true);
