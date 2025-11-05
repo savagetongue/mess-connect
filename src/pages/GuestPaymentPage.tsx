@@ -110,9 +110,25 @@ export function GuestPaymentPage() {
               <FormField control={form.control} name="phone" render={({ field }) => (
                 <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="9876543210" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="amount" render={({ field }) => (
-                <FormItem><FormLabel>Amount (₹)</FormLabel><FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Amount (₹)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 50"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
+                        value={field.value ?? ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white" disabled={isLoading}>
                 {isLoading ? 'Processing...' : 'Pay Now'}
               </Button>
