@@ -1,11 +1,13 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { I18nContext } from '../contexts/I18nContext';
+
 type Language = 'en' | 'mr' | 'hi';
 type Translations = {
   [key: string]: {
     [key: string]: string;
   };
 };
-interface I18nContextType {
+export interface I18nContextType {
   language: Language;
   setLanguage: (language: Language) => void;
   t: (key: string, params?: { [key: string]: string | number }) => string;
@@ -408,7 +410,7 @@ const translations: Translations = {
     noRulesSet: 'प्रबंधक द्वारा अभी तक कोई नियम निर्धारित नहीं किया गया है।',
   },
 };
-export const I18nContext = createContext<I18nContextType | undefined>(undefined);
+
 export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const savedLang = localStorage.getItem('language') as Language;
@@ -435,3 +437,5 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </I18nContext.Provider>
   );
 };
+
+

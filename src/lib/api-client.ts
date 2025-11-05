@@ -10,8 +10,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
-  const body = isFormData ? init.body : JSON.stringify(init?.body);
-  const res = await fetch(path, { ...init, headers, body });
+  const res = await fetch(path, { ...init, headers, body: isFormData ? init?.body : JSON.stringify(init?.body) });
   const json = (await res.json()) as ApiResponse<T>;
   if (!res.ok || !json.success || json.data === undefined) {
     throw new Error(json.error || 'Request failed');
