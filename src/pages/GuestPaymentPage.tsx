@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ export function GuestPaymentPage() {
     resolver: zodResolver(guestPaymentSchema),
     defaultValues: { name: '', phone: '', amount: undefined },
   });
-  const onSubmit = async (values: GuestPaymentFormValues) => {
+  const onSubmit: SubmitHandler<GuestPaymentFormValues> = async (values) => {
     setIsLoading(true);
     try {
       const order = await api<{ id: string; amount: number; currency: string }>('/api/payments/create-order', {
@@ -36,7 +36,7 @@ export function GuestPaymentPage() {
         body: JSON.stringify({ amount: values.amount, name: values.name, phone: values.phone }),
       });
       const options = {
-        key: 'rzp_test_Rc4X9qW2OGg1Ch', // Updated Key
+        key: 'rzp_test_Rc4X9qW2OGg1Ch',
         amount: order.amount,
         currency: order.currency,
         name: 'Mess Connect',
