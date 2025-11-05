@@ -14,6 +14,8 @@ import { api } from "@/lib/api-client";
 import type { Suggestion } from "@shared/types";
 import { toast } from "@/components/ui/sonner";
 import { format } from "date-fns";
+// This page is for managing student suggestions.
+// For complaints, please see ManagerFeedbackPage.tsx
 export function ManagerSuggestionsPage() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +60,7 @@ export function ManagerSuggestionsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Student Suggestions</CardTitle>
-          <CardDescription>View and respond to student suggestions.</CardDescription>
+          <CardDescription>View and respond to student suggestions. This is separate from complaints.</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
