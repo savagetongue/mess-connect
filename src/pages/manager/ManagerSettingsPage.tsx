@@ -31,6 +31,7 @@ export function ManagerSettingsPage() {
   const logout = useAuth(s => s.logout);
   const form = useForm<FeeFormValues>({
     resolver: zodResolver(feeSchema),
+    defaultValues: { monthlyFee: 0 },
   });
   useEffect(() => {
     const fetchFee = async () => {

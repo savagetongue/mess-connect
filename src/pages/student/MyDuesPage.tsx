@@ -10,29 +10,82 @@ import { AlertCircle, DollarSign } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { Payment } from "@shared/types";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/components/ui/sonner";
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 export function MyDuesPage() {
+  const user = useAuth(s => s.user);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [monthlyFee, setMonthlyFee] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [duesData, feeData] = await Promise.all([
+        api<{ payments: Payment[] }>('/api/student/dues'),
+        api<{ monthlyFee: number }>('/api/settings/fee')
+      ]);
+      setPayments(duesData.payments.sort((a, b) => b.createdAt - a.createdAt));
+      setMonthlyFee(feeData.monthlyFee);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch payment history.");
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [duesData, feeData] = await Promise.all([
-          api<{ payments: Payment[] }>('/api/student/dues'),
-          api<{ monthlyFee: number }>('/api/settings/fee')
-        ]);
-        setPayments(duesData.payments.sort((a, b) => b.createdAt - a.createdAt));
-        setMonthlyFee(feeData.monthlyFee);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch payment history.");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
+  const handlePayment = async () => {
+    if (!monthlyFee || !user) return;
+    try {
+      const order = await api<{ id: string; amount: number; currency: string }>('/api/payments/create-order', {
+        method: 'POST',
+        body: JSON.stringify({ amount: monthlyFee }),
+      });
+      const options = {
+        key: 'rzp_test_RSUdCmphd81o8f', // Replace with your key
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Mess Connect',
+        description: `Monthly Fee for ${format(new Date(), "MMMM yyyy")}`,
+        order_id: order.id,
+        handler: async function (response: any) {
+          try {
+            await api('/api/payments/verify-payment', {
+              method: 'POST',
+              body: JSON.stringify({
+                ...response,
+                amount: monthlyFee,
+                studentId: user.id,
+              }),
+            });
+            toast.success('Payment successful!');
+            fetchData(); // Refresh dues
+          } catch (verifyError: any) {
+            toast.error(verifyError.message || 'Payment verification failed.');
+          }
+        },
+        prefill: {
+          name: user.name,
+          email: user.id,
+          contact: user.phone,
+        },
+        theme: {
+          color: '#F97316',
+        },
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create payment order.');
+    }
+  };
   const currentMonthStr = format(new Date(), "yyyy-MM");
   const isCurrentMonthPaid = payments.some(p => p.month === currentMonthStr && p.status === 'paid');
   return (
@@ -54,7 +107,9 @@ export function MyDuesPage() {
                 <p className="text-2xl font-bold">₹{monthlyFee?.toLocaleString() ?? '...'}</p>
               )}
             </div>
-            <Button disabled>Pay Now (Razorpay Coming Soon)</Button>
+            <Button onClick={handlePayment} disabled={isCurrentMonthPaid || loading || !monthlyFee}>
+              {isCurrentMonthPaid ? "Paid" : "Pay Now"}
+            </Button>
           </div>
           <h3 className="text-lg font-semibold mb-2">Payment History</h3>
           {loading ? (
