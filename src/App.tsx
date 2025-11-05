@@ -11,6 +11,7 @@ import { WeeklyMenuPage } from '@/pages/student/WeeklyMenuPage';
 import { MyDuesPage } from '@/pages/student/MyDuesPage';
 import { ComplaintsPage } from '@/pages/student/ComplaintsPage';
 import { SuggestionsPage } from '@/pages/student/SuggestionsPage';
+import { NotificationsPage } from '@/pages/student/NotificationsPage';
 // Manager Pages
 import { ManagerDashboardPage } from '@/pages/manager/ManagerDashboardPage';
 import { StudentManagementPage } from '@/pages/manager/StudentManagementPage';
@@ -23,6 +24,7 @@ import { ManagerBroadcastPage } from '@/pages/manager/ManagerBroadcastPage';
 import { ManagerSettingsPage } from '@/pages/manager/ManagerSettingsPage';
 // Admin Pages
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
+import { AdminMenuPage } from '@/pages/admin/AdminMenuPage';
 // Layout & Auth
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 export function App() {
@@ -38,6 +40,7 @@ export function App() {
     { path: "/student/dues", element: <ProtectedRoute role="student"><MyDuesPage /></ProtectedRoute> },
     { path: "/student/complaints", element: <ProtectedRoute role="student"><ComplaintsPage /></ProtectedRoute> },
     { path: "/student/suggestions", element: <ProtectedRoute role="student"><SuggestionsPage /></ProtectedRoute> },
+    { path: "/student/notifications", element: <ProtectedRoute role="student"><NotificationsPage /></ProtectedRoute> },
     // Manager Routes
     { path: "/manager/dashboard", element: <ProtectedRoute role="manager"><ManagerDashboardPage /></ProtectedRoute> },
     { path: "/manager/students", element: <ProtectedRoute role="manager"><StudentManagementPage /></ProtectedRoute> },
@@ -50,6 +53,7 @@ export function App() {
     { path: "/manager/settings", element: <ProtectedRoute role="manager"><ManagerSettingsPage /></ProtectedRoute> },
     // Admin Routes
     { path: "/admin/dashboard", element: <ProtectedRoute role="admin"><AdminDashboardPage /></ProtectedRoute> },
+    { path: "/admin/menu", element: <ProtectedRoute role="admin"><AdminMenuPage /></ProtectedRoute> },
   ]);
   return <RouterProvider router={router} />;
 }

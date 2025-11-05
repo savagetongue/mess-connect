@@ -7,9 +7,7 @@ import { Bell, AlertCircle } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { Notification } from "@shared/types";
 import { format } from "date-fns";
-import { useTranslation } from "@/hooks/useTranslation";
 export function NotificationsPage() {
-  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,53 +26,49 @@ export function NotificationsPage() {
     fetchNotifications();
   }, []);
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-8 md:py-10 lg:py-12">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('notificationsTitle')}</CardTitle>
-              <CardDescription>{t('notificationsDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="space-y-4">
-                  <Skeleton className="h-16 w-full" />
-                  <Skeleton className="h-16 w-full" />
-                  <Skeleton className="h-16 w-full" />
+    <AppLayout container>
+      <Card>
+        <CardHeader>
+          <CardTitle>Notifications</CardTitle>
+          <CardDescription>Important messages and updates from the manager.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+            </div>
+          ) : error ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : notifications.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground">
+              <Bell className="mx-auto h-12 w-12" />
+              <p className="mt-4">You have no new notifications.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {notifications.map((notification) => (
+                <div key={notification.id} className="flex items-start gap-4 p-4 border rounded-lg">
+                  <div className="mt-1">
+                    <Bell className="h-5 w-5 text-orange-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm">{notification.message}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {format(new Date(notification.createdAt), "PPp")}
+                    </p>
+                  </div>
                 </div>
-              ) : error ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>{t('error')}</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              ) : notifications.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground">
-                  <Bell className="mx-auto h-12 w-12" />
-                  <p className="mt-4">{t('noNotifications')}</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {notifications.map((notification) => (
-                    <div key={notification.id} className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent transition-colors">
-                      <div className="mt-1">
-                        <Bell className="h-5 w-5 text-orange-500" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm">{notification.message}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {format(new Date(notification.createdAt), "PPp")}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </AppLayout>
   );
 }

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity, SuggestionEntity, SettingEntity } from "./entities";
+import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity, SuggestionEntity, SettingEntity, NotificationEntity } from "./entities";
 import { ok, bad, notFound, Index } from './core-utils';
 import { z } from 'zod';
 import type { User, WeeklyMenu, Complaint, Note, Payment } from "@shared/types";
@@ -226,6 +226,13 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const studentSuggestions = allSuggestions.filter(suggestion => suggestion.studentId === user.id);
         return ok(c, { suggestions: studentSuggestions });
     });
+    app.get('/api/student/notifications', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const allNotifications = (await NotificationEntity.list(c.env)).items;
+        const studentNotifications = allNotifications.filter(n => n.userId === user.id);
+        return ok(c, { notifications: studentNotifications });
+    });
     // MANAGER & ADMIN ROUTES
     app.get('/api/complaints/all', async (c) => {
         const user = c.get('user');
@@ -383,7 +390,7 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
     app.post('/api/settings/clear-all-data', async (c) => {
         const user = c.get('user');
         if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
-        const entityClasses = [UserEntity, ComplaintEntity, SuggestionEntity, MenuEntity, PaymentEntity, GuestPaymentEntity, NoteEntity, SettingEntity];
+        const entityClasses = [UserEntity, ComplaintEntity, SuggestionEntity, MenuEntity, PaymentEntity, GuestPaymentEntity, NoteEntity, SettingEntity, NotificationEntity];
         for (const EntityClass of entityClasses) {
             const index = new Index(c.env, EntityClass.indexName);
             await index.clear();
@@ -407,9 +414,17 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const body = await c.req.json();
         const validation = BroadcastSchema.safeParse(body);
         if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
-        // Placeholder: In a real app, you'd queue this for sending.
-        console.log(`BROADCAST: ${validation.data.message}`);
-        return ok(c, { message: 'Broadcast message received.' });
+        const allUsers = (await UserEntity.list(c.env)).items;
+        const approvedStudents = allUsers.filter(u => u.role === 'student' && u.status === 'approved');
+        for (const student of approvedStudents) {
+            await NotificationEntity.create(c.env, {
+                id: crypto.randomUUID(),
+                userId: student.id,
+                message: validation.data.message,
+                createdAt: Date.now(),
+            });
+        }
+        return ok(c, { message: `Broadcast sent to ${approvedStudents.length} students.` });
     });
     app.post('/api/payments/mark-as-paid', async (c) => {
         const user = c.get('user');

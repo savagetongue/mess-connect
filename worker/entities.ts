@@ -1,5 +1,5 @@
 import { IndexedEntity } from "./core-utils";
-import type { User, Complaint, Suggestion, WeeklyMenu, Payment, GuestPayment, Note, Setting } from "@shared/types";
+import type { User, Complaint, Suggestion, WeeklyMenu, Payment, GuestPayment, Note, Setting, Notification } from "@shared/types";
 // USER ENTITY
 export class UserEntity extends IndexedEntity<User> {
   static readonly entityName = "user";
@@ -58,4 +58,10 @@ export class SettingEntity extends IndexedEntity<Setting> {
     static readonly entityName = "setting";
     static readonly indexName = "settings";
     static readonly initialState: Setting = { id: 'singleton', monthlyFee: 3000 };
+}
+// NOTIFICATION ENTITY
+export class NotificationEntity extends IndexedEntity<Notification> {
+    static readonly entityName = "notification";
+    static readonly indexName = "notifications";
+    static readonly initialState: Notification = { id: "", userId: "", message: "", createdAt: 0 };
 }
