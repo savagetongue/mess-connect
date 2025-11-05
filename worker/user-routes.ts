@@ -48,6 +48,9 @@ const UpdateNoteSchema = z.object({
 const BroadcastSchema = z.object({
     message: z.string().min(10, "Message must be at least 10 characters."),
 });
+const NotificationSchema = z.object({
+    message: z.string().min(10, "Message must be at least 10 characters."),
+});
 const MarkAsPaidSchema = z.object({
     studentId: z.string(),
     amount: z.number().positive(),
@@ -371,6 +374,23 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         if (!await studentEntity.exists()) return notFound(c, 'Student not found.');
         await studentEntity.patch({ status: 'rejected' });
         return ok(c, { message: 'Student rejected successfully.' });
+    });
+    app.post('/api/students/:id/notify', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const studentId = c.req.param('id');
+        const body = await c.req.json();
+        const validation = NotificationSchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        const studentEntity = new UserEntity(c.env, studentId);
+        if (!await studentEntity.exists()) return notFound(c, 'Student not found.');
+        await NotificationEntity.create(c.env, {
+            id: crypto.randomUUID(),
+            userId: studentId,
+            message: validation.data.message,
+            createdAt: Date.now(),
+        });
+        return ok(c, { message: `Notification sent to student.` });
     });
     app.delete('/api/students/:id', async (c) => {
         const user = c.get('user');

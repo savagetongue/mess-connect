@@ -7,8 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, Search } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { AlertCircle, Search, Bell } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { User, UserStatus } from "@shared/types";
 import { toast } from "@/components/ui/sonner";
@@ -17,6 +20,9 @@ export function StudentManagementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [isNotifying, setIsNotifying] = useState(false);
   const fetchStudents = async () => {
     try {
       setLoading(true);
@@ -43,6 +49,23 @@ export function StudentManagementPage() {
       fetchStudents(); // Refresh the list
     } catch (err) {
       toast.error(err instanceof Error ? err.message : `Failed to ${action} student.`);
+    }
+  };
+  const handleSendNotification = async () => {
+    if (!selectedStudent || !notificationMessage.trim()) return;
+    setIsNotifying(true);
+    try {
+      await api(`/api/students/${selectedStudent.id}/notify`, {
+        method: 'POST',
+        body: JSON.stringify({ message: notificationMessage.trim() }),
+      });
+      toast.success(`Notification sent to ${selectedStudent.name}.`);
+      setSelectedStudent(null);
+      setNotificationMessage("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send notification.");
+    } finally {
+      setIsNotifying(false);
     }
   };
   const getBadgeVariant = (status: UserStatus) => {
@@ -82,6 +105,7 @@ export function StudentManagementPage() {
               loading={loading}
               onAction={handleAction}
               getBadgeVariant={getBadgeVariant}
+              onNotify={setSelectedStudent}
               isPending
             />
           </CardContent>
@@ -111,10 +135,39 @@ export function StudentManagementPage() {
               loading={loading}
               onAction={handleAction}
               getBadgeVariant={getBadgeVariant}
+              onNotify={setSelectedStudent}
             />
           </CardContent>
         </Card>
       </div>
+      <Dialog open={!!selectedStudent} onOpenChange={(isOpen) => !isOpen && setSelectedStudent(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Send Notification</DialogTitle>
+            <DialogDescription>Send a message to {selectedStudent?.name}.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <Label htmlFor="notification-message">Message</Label>
+              <Textarea
+                id="notification-message"
+                placeholder="Type your message here..."
+                value={notificationMessage}
+                onChange={(e) => setNotificationMessage(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleSendNotification} disabled={isNotifying || !notificationMessage.trim()}>
+              {isNotifying ? "Sending..." : "Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
@@ -123,9 +176,10 @@ interface StudentTableProps {
   loading: boolean;
   onAction: (studentId: string, action: 'approve' | 'reject' | 'delete') => void;
   getBadgeVariant: (status: UserStatus) => "default" | "secondary" | "destructive" | "outline";
+  onNotify: (student: User) => void;
   isPending?: boolean;
 }
-function StudentTable({ students, loading, onAction, getBadgeVariant, isPending = false }: StudentTableProps) {
+function StudentTable({ students, loading, onAction, getBadgeVariant, onNotify, isPending = false }: StudentTableProps) {
   if (loading) {
     return (
       <div className="space-y-2">
@@ -167,25 +221,32 @@ function StudentTable({ students, loading, onAction, getBadgeVariant, isPending 
                   <Button size="sm" onClick={() => onAction(student.id, 'approve')}>Approve</Button>
                 </>
               ) : (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button size="sm" variant="destructive">Delete</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will permanently delete the student "{student.name}". This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onAction(student.id, 'delete')} className="bg-destructive hover:bg-destructive/90">
-                        Delete Student
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <>
+                  {student.status === 'approved' && (
+                    <Button size="sm" variant="outline" onClick={() => onNotify(student)}>
+                      <Bell className="h-4 w-4 mr-2" /> Notify
+                    </Button>
+                  )}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="destructive">Delete</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete the student "{student.name}". This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onAction(student.id, 'delete')} className="bg-destructive hover:bg-destructive/90">
+                          Delete Student
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
               )}
             </TableCell>
           </TableRow>
