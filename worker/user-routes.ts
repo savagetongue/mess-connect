@@ -3,7 +3,7 @@ import type { Env } from './core-utils';
 import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity } from "./entities";
 import { ok, bad, notFound } from './core-utils';
 import { z } from 'zod';
-import type { User, WeeklyMenu } from "@shared/types";
+import type { User, WeeklyMenu, Complaint } from "@shared/types";
 type HonoVariables = {
     user?: User;
 };
@@ -20,6 +20,9 @@ const LoginSchema = z.object({
 const ComplaintSchema = z.object({
     text: z.string().min(10, "Complaint must be at least 10 characters."),
     imageUrl: z.string().url().optional(),
+});
+const ReplySchema = z.object({
+    reply: z.string().min(1, "Reply cannot be empty."),
 });
 const GuestPaymentSchema = z.object({
     name: z.string().min(2),
@@ -109,16 +112,35 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const complaint = await ComplaintEntity.create(c.env, { id: crypto.randomUUID(), studentId: user.id, studentName: user.name, text, imageUrl, createdAt: Date.now() });
         return ok(c, complaint);
     });
+    // MANAGER & ADMIN ROUTES
+    app.get('/api/complaints/all', async (c) => {
+        const user = c.get('user');
+        if (!user || (user.role !== 'manager' && user.role !== 'admin')) return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const allComplaints = (await ComplaintEntity.list(c.env)).items;
+        return ok(c, { complaints: allComplaints });
+    });
+    app.post('/api/complaints/:id/reply', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const complaintId = c.req.param('id');
+        const body = await c.req.json();
+        const validation = ReplySchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        const complaintEntity = new ComplaintEntity(c.env, complaintId);
+        if (!await complaintEntity.exists()) return notFound(c, 'Complaint not found.');
+        await complaintEntity.patch({ reply: validation.data.reply });
+        return ok(c, { message: 'Reply added successfully.' });
+    });
     // MANAGER ROUTES
     app.get('/api/manager/stats', async (c) => {
         const user = c.get('user');
         if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
         const allUsers = (await UserEntity.list(c.env)).items;
+        const allGuestPayments = (await GuestPaymentEntity.list(c.env)).items;
         const students = allUsers.filter(u => u.role === 'student');
         const totalStudents = students.filter(s => s.status === 'approved').length;
         const pendingApprovals = students.filter(s => s.status === 'pending').length;
-        // Placeholder for revenue
-        const monthlyRevenue = 0;
+        const monthlyRevenue = allGuestPayments.reduce((sum, payment) => sum + payment.amount, 0);
         return ok(c, { totalStudents, pendingApprovals, monthlyRevenue });
     });
     app.get('/api/students', async (c) => {

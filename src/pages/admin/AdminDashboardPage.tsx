@@ -5,18 +5,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ExternalLink } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { Complaint } from "@shared/types";
 import { format } from "date-fns";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 export function AdminDashboardPage() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fetchComplaints = async () => {
     try {
       setLoading(true);
@@ -73,9 +69,9 @@ export function AdminDashboardPage() {
                     <TableCell className="max-w-xs truncate">{complaint.text}</TableCell>
                     <TableCell>
                       {complaint.imageUrl ? (
-                        <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setSelectedImage(complaint.imageUrl!)}>
-                          View Image
-                        </Button>
+                        <a href={complaint.imageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline inline-flex items-center">
+                          View <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
                       ) : (
                         "N/A"
                       )}
@@ -94,24 +90,6 @@ export function AdminDashboardPage() {
           )}
         </CardContent>
       </Card>
-      <Dialog open={!!selectedImage} onOpenChange={(isOpen) => !isOpen && setSelectedImage(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Complaint Image</DialogTitle>
-          </DialogHeader>
-          {selectedImage && (
-            <div className="mt-2 w-full rounded-md overflow-hidden border">
-                <AspectRatio ratio={16 / 9}>
-                <img
-                    src={selectedImage}
-                    alt="Complaint attachment"
-                    className="object-cover w-full h-full"
-                />
-                </AspectRatio>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </AppLayout>
   );
 }
