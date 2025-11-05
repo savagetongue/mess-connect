@@ -9,22 +9,23 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { api } from "@/lib/api-client";
 import { toast } from "@/components/ui/sonner";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, MessageSquare, FileText } from "lucide-react";
+import { MessageSquare, FileText } from "lucide-react";
 import { format } from "date-fns";
 import type { Complaint } from "@shared/types";
 const complaintSchema = z.object({
   text: z.string().min(10, "Complaint must be at least 10 characters long."),
-  image: z.any().optional(),
+  image: z.instanceof(FileList).optional(),
 });
 type ComplaintFormValues = z.infer<typeof complaintSchema>;
 export function ComplaintsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [pastComplaints, setPastComplaints] = useState<Complaint[]>([]);
   const [loadingComplaints, setLoadingComplaints] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const fetchComplaints = async () => {
     setLoadingComplaints(true);
     try {
@@ -46,16 +47,20 @@ export function ComplaintsPage() {
   const onSubmit = async (values: ComplaintFormValues) => {
     setIsLoading(true);
     try {
-      const payload = {
-        text: values.text,
-        hasImage: !!values.image?.[0],
-      };
+      const formData = new FormData();
+      formData.append('text', values.text);
+      if (values.image && values.image.length > 0) {
+        formData.append('image', values.image[0]);
+      }
       await api('/api/complaints', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: formData,
       });
       toast.success("Complaint submitted successfully!");
       form.reset();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       fetchComplaints(); // Refresh the list
     } catch (error: any) {
       toast.error(error.message || "Failed to submit complaint.");
@@ -94,7 +99,12 @@ export function ComplaintsPage() {
                     <FormItem>
                       <FormLabel>Attach an Image (Optional)</FormLabel>
                       <FormControl>
-                        <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          ref={fileInputRef}
+                          onChange={(e) => field.onChange(e.target.files)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
