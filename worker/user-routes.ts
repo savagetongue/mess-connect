@@ -147,6 +147,20 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const studentPayments = allPayments.filter(p => p.userId === user.id);
         return ok(c, { payments: studentPayments });
     });
+    app.get('/api/student/complaints', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const allComplaints = (await ComplaintEntity.list(c.env)).items;
+        const studentComplaints = allComplaints.filter(complaint => complaint.studentId === user.id);
+        return ok(c, { complaints: studentComplaints });
+    });
+    app.get('/api/student/suggestions', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const allSuggestions = (await SuggestionEntity.list(c.env)).items;
+        const studentSuggestions = allSuggestions.filter(suggestion => suggestion.studentId === user.id);
+        return ok(c, { suggestions: studentSuggestions });
+    });
     // MANAGER & ADMIN ROUTES
     app.get('/api/complaints/all', async (c) => {
         const user = c.get('user');

@@ -7,14 +7,36 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "@/components/ui/sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "@/lib/api-client";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Lightbulb, MessageSquare } from "lucide-react";
+import { format } from "date-fns";
+import type { Suggestion } from "@shared/types";
 const suggestionSchema = z.object({
   text: z.string().min(10, "Suggestion must be at least 10 characters long."),
 });
 type SuggestionFormValues = z.infer<typeof suggestionSchema>;
 export function SuggestionsPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [pastSuggestions, setPastSuggestions] = useState<Suggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
+  const fetchSuggestions = async () => {
+    setLoadingSuggestions(true);
+    try {
+      const data = await api<{ suggestions: Suggestion[] }>('/api/student/suggestions');
+      setPastSuggestions(data.suggestions.sort((a, b) => b.createdAt - a.createdAt));
+    } catch (error) {
+      toast.error("Failed to load past suggestions.");
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+  useEffect(() => {
+    fetchSuggestions();
+  }, []);
   const form = useForm<SuggestionFormValues>({
     resolver: zodResolver(suggestionSchema),
     defaultValues: { text: "" },
@@ -28,6 +50,7 @@ export function SuggestionsPage() {
       });
       toast.success("Thank you for your suggestion!");
       form.reset();
+      fetchSuggestions(); // Refresh the list
     } catch (error: any) {
       toast.error(error.message || "Failed to submit suggestion.");
     } finally {
@@ -70,9 +93,48 @@ export function SuggestionsPage() {
             <CardTitle>Your Past Suggestions</CardTitle>
             <CardDescription>Here are your previously submitted suggestions.</CardDescription>
           </CardHeader>
-          <CardContent className="text-center text-muted-foreground">
-            <p>You have no past suggestions.</p>
-            <p className="text-sm">(This feature is coming soon)</p>
+          <CardContent>
+            {loadingSuggestions ? (
+              <div className="space-y-2">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : pastSuggestions.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground">
+                <Lightbulb className="mx-auto h-12 w-12" />
+                <p className="mt-4">You have no past suggestions.</p>
+              </div>
+            ) : (
+              <Accordion type="single" collapsible className="w-full">
+                {pastSuggestions.map((suggestion) => (
+                  <AccordionItem value={suggestion.id} key={suggestion.id}>
+                    <AccordionTrigger>
+                      <div className="flex justify-between items-center w-full pr-4">
+                        <span className="truncate max-w-xs">{suggestion.text}</span>
+                        <Badge variant={suggestion.reply ? "default" : "secondary"}>
+                          {suggestion.reply ? "Replied" : "Pending"}
+                        </Badge>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-4 px-2">
+                        <p className="text-sm text-muted-foreground">{suggestion.text}</p>
+                        <p className="text-xs text-muted-foreground">Submitted on: {format(new Date(suggestion.createdAt), "PPp")}</p>
+                        {suggestion.reply ? (
+                          <div className="p-3 bg-muted rounded-md">
+                            <p className="text-sm font-semibold flex items-center"><MessageSquare className="h-4 w-4 mr-2" /> Manager's Reply:</p>
+                            <p className="text-sm text-muted-foreground pl-6">{suggestion.reply}</p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-yellow-600">Awaiting reply from manager.</p>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
           </CardContent>
         </Card>
       </div>
