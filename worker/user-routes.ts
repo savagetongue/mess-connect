@@ -4,6 +4,7 @@ import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEnt
 import { ok, bad, notFound, Index } from './core-utils';
 import { z } from 'zod';
 import type { User, WeeklyMenu, Complaint, Note, Payment } from "@shared/types";
+import { format } from "date-fns";
 type HonoVariables = {
     user?: User;
 };
@@ -46,6 +47,13 @@ const NoteSchema = z.object({
 });
 const UpdateNoteSchema = z.object({
     completed: z.boolean(),
+});
+const BroadcastSchema = z.object({
+    message: z.string().min(10, "Message must be at least 10 characters."),
+});
+const MarkAsPaidSchema = z.object({
+    studentId: z.string(),
+    amount: z.number().positive(),
 });
 const getUser = async (c: any, next: any) => {
     const authHeader = c.req.header('Authorization');
@@ -302,5 +310,39 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
             await index.clear();
         }
         return ok(c, { message: 'All application data has been cleared.' });
+    });
+    // New Manager Routes
+    app.post('/api/broadcast', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const body = await c.req.json();
+        const validation = BroadcastSchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        // Placeholder: In a real app, you'd queue this for sending.
+        console.log(`BROADCAST: ${validation.data.message}`);
+        return ok(c, { message: 'Broadcast message received.' });
+    });
+    app.post('/api/payments/mark-as-paid', async (c) => {
+        const user = c.get('user');
+        if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+        const body = await c.req.json();
+        const validation = MarkAsPaidSchema.safeParse(body);
+        if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+        const { studentId, amount } = validation.data;
+        const studentEntity = new UserEntity(c.env, studentId);
+        if (!await studentEntity.exists()) return notFound(c, 'Student not found.');
+        const student = await studentEntity.getState();
+        const month = format(new Date(), "yyyy-MM");
+        const payment = await PaymentEntity.create(c.env, {
+            id: crypto.randomUUID(),
+            userId: studentId,
+            userName: student.name,
+            amount,
+            month,
+            status: 'paid',
+            method: 'cash',
+            createdAt: Date.now(),
+        });
+        return ok(c, payment);
     });
 }
