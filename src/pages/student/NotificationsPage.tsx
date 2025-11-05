@@ -7,7 +7,9 @@ import { Bell, AlertCircle } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { Notification } from "@shared/types";
 import { format } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 export function NotificationsPage() {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,8 +31,8 @@ export function NotificationsPage() {
     <AppLayout container>
       <Card>
         <CardHeader>
-          <CardTitle>Notifications</CardTitle>
-          <CardDescription>Important messages and updates from the manager.</CardDescription>
+          <CardTitle>{t('notificationsTitle')}</CardTitle>
+          <CardDescription>{t('notificationsDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -42,13 +44,13 @@ export function NotificationsPage() {
           ) : error ? (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle>{t('error')}</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : notifications.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
               <Bell className="mx-auto h-12 w-12" />
-              <p className="mt-4">You have no new notifications.</p>
+              <p className="mt-4">{t('noNotifications')}</p>
             </div>
           ) : (
             <div className="space-y-4">
