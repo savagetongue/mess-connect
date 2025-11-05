@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,14 +18,42 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Trash2 } from "lucide-react";
+import { Trash2, Save } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
+const feeSchema = z.object({
+  monthlyFee: z.coerce.number().positive({ message: "Fee must be a positive number." }),
+});
+type FeeFormValues = z.infer<typeof feeSchema>;
 export function ManagerSettingsPage() {
   const [isClearing, setIsClearing] = useState(false);
   const logout = useAuth(s => s.logout);
+  const form = useForm<FeeFormValues>({
+    resolver: zodResolver(feeSchema),
+  });
+  useEffect(() => {
+    const fetchFee = async () => {
+      try {
+        const data = await api<{ monthlyFee: number }>('/api/settings/fee');
+        form.setValue('monthlyFee', data.monthlyFee);
+      } catch (error) {
+        toast.error("Failed to load current monthly fee.");
+      }
+    };
+    fetchFee();
+  }, [form]);
+  const onFeeSubmit = async (values: FeeFormValues) => {
+    try {
+      await api('/api/settings/fee', {
+        method: 'POST',
+        body: JSON.stringify(values),
+      });
+      toast.success("Monthly fee updated successfully.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update fee.");
+    }
+  };
   const handleClearData = async () => {
     setIsClearing(true);
     try {
@@ -44,6 +77,35 @@ export function ManagerSettingsPage() {
             <CardTitle>Settings</CardTitle>
             <CardDescription>Manage application-wide settings.</CardDescription>
           </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Financial Settings</CardTitle>
+            <CardDescription>Set the standard monthly fee for all students.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onFeeSubmit)} className="space-y-4 max-w-sm">
+                <FormField
+                  control={form.control}
+                  name="monthlyFee"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Monthly Mess Fee (₹)</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 3000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  <Save className="mr-2 h-4 w-4" />
+                  {form.formState.isSubmitting ? "Saving..." : "Save Fee"}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
         </Card>
         <Card className="border-destructive">
           <CardHeader>
