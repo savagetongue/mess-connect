@@ -1,16 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-type Language = 'en' | 'mr' | 'hi';
-type Translations = {
+export type Language = 'en' | 'mr' | 'hi';
+export type Translations = {
   [key: string]: {
     [key: string]: string;
   };
 };
-interface I18nContextType {
-  language: Language;
-  setLanguage: (language: Language) => void;
-  t: (key: string, params?: { [key: string]: string | number }) => string;
-}
-const translations: Translations = {
+export const translations: Translations = {
   en: {
     // General
     appName: 'Mess Connect',
@@ -407,38 +401,4 @@ const translations: Translations = {
     messRulesDescription: 'कृपया एक सुखद भोजन वातावरण बनाए रखने के लिए निम्नलिखित नियमों का पालन करें।',
     noRulesSet: 'प्रबंधक द्वारा अभी तक कोई नियम निर्धारित नहीं किया गया है।',
   },
-};
-const I18nContext = createContext<I18nContextType | undefined>(undefined);
-export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>(() => {
-    const savedLang = localStorage.getItem('language') as Language;
-    return savedLang || 'en';
-  });
-  useEffect(() => {
-    localStorage.setItem('language', language);
-  }, [language]);
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-  };
-  const t = useCallback((key: string, params?: { [key: string]: string | number }): string => {
-    let translation = translations[language][key] || translations['en'][key] || key;
-    if (params) {
-      Object.keys(params).forEach(paramKey => {
-        translation = translation.replace(`{${paramKey}}`, String(params[paramKey]));
-      });
-    }
-    return translation;
-  }, [language]);
-  return (
-    <I18nContext.Provider value={{ language, setLanguage, t }}>
-      {children}
-    </I18nContext.Provider>
-  );
-};
-export const useTranslation = (): I18nContextType => {
-  const context = useContext(I18nContext);
-  if (!context) {
-    throw new Error('useTranslation must be used within an I18nProvider');
-  }
-  return context;
 };
