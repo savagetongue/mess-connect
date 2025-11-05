@@ -12,12 +12,14 @@ import type { Payment } from "@shared/types";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
+import { useTranslation } from "@/lib/i18n";
 declare global {
   interface Window {
     Razorpay: any;
   }
 }
 export function MyDuesPage() {
+  const { t } = useTranslation();
   const user = useAuth(s => s.user);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [monthlyFee, setMonthlyFee] = useState<number | null>(null);
@@ -28,7 +30,7 @@ export function MyDuesPage() {
       setLoading(true);
       const [duesData, feeData] = await Promise.all([
         api<{ payments: Payment[] }>('/api/student/dues'),
-        api<{ monthlyFee: number }>('/api/settings/fee')
+        api<{ monthlyFee: number }>('/api/settings')
       ]);
       setPayments(duesData.payments.sort((a, b) => b.createdAt - a.createdAt));
       setMonthlyFee(feeData.monthlyFee);
@@ -46,10 +48,10 @@ export function MyDuesPage() {
     try {
       const order = await api<{ id: string; amount: number; currency: string }>('/api/payments/create-order', {
         method: 'POST',
-        body: JSON.stringify({ amount: monthlyFee }),
+        body: JSON.stringify({ amount: monthlyFee, studentId: user.id }),
       });
       const options = {
-        key: 'rzp_test_Rc4X9qW2OGg1Ch', // Updated Key
+        key: 'rzp_test_Rc4X9qW2OGg1Ch',
         amount: order.amount,
         currency: order.currency,
         name: 'Mess Connect',
@@ -92,48 +94,48 @@ export function MyDuesPage() {
     <AppLayout container>
       <Card>
         <CardHeader>
-          <CardTitle>My Dues & Payment History</CardTitle>
-          <CardDescription>Review your payment history and settle outstanding dues.</CardDescription>
+          <CardTitle>{t('myDuesTitle')}</CardTitle>
+          <CardDescription>{t('myDuesDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-6 p-4 border rounded-lg flex justify-between items-center bg-muted/50">
             <div>
-              <p className="text-sm text-muted-foreground">Current Month Due</p>
+              <p className="text-sm text-muted-foreground">{t('currentMonthDue')}</p>
               {loading ? (
                 <Skeleton className="h-8 w-32 mt-1" />
               ) : isCurrentMonthPaid ? (
-                <p className="text-2xl font-bold text-green-600">Paid</p>
+                <p className="text-2xl font-bold text-green-600">{t('paid')}</p>
               ) : (
                 <p className="text-2xl font-bold">₹{monthlyFee?.toLocaleString() ?? '...'}</p>
               )}
             </div>
             <Button onClick={handlePayment} disabled={isCurrentMonthPaid || loading || !monthlyFee}>
-              {isCurrentMonthPaid ? "Paid" : "Pay Now"}
+              {isCurrentMonthPaid ? t('paid') : t('payNowButton')}
             </Button>
           </div>
-          <h3 className="text-lg font-semibold mb-2">Payment History</h3>
+          <h3 className="text-lg font-semibold mb-2">{t('paymentHistory')}</h3>
           {loading ? (
             <Skeleton className="h-48 w-full" />
           ) : error ? (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle>{t('error')}</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : payments.length === 0 ? (
             <div className="text-center py-10">
               <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
-              <p className="mt-2 text-sm text-muted-foreground">No payment history found.</p>
+              <p className="mt-2 text-sm text-muted-foreground">{t('noPaymentHistory')}</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Month</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>{t('month')}</TableHead>
+                  <TableHead>{t('amount')}</TableHead>
+                  <TableHead>{t('status')}</TableHead>
+                  <TableHead>{t('method')}</TableHead>
+                  <TableHead>{t('date')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -143,7 +145,7 @@ export function MyDuesPage() {
                     <TableCell>₹{payment.amount}</TableCell>
                     <TableCell>
                       <Badge variant={payment.status === 'paid' ? 'default' : 'destructive'}>
-                        {payment.status}
+                        {t(payment.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="capitalize">{payment.method.replace('_', ' ')}</TableCell>

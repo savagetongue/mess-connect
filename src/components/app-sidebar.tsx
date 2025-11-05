@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, User, Settings, LogOut, Utensils, ShieldCheck, FileText, Lightbulb, DollarSign, Notebook, Users, Send, Bell, BookOpen } from "lucide-react";
+import { Home, Settings, LogOut, Utensils, ShieldCheck, FileText, Lightbulb, DollarSign, Notebook, Users, Send, Bell, BookOpen } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,38 +11,40 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { useAuth, UserRole } from "@/hooks/useAuth";
+import { useTranslation } from "@/lib/i18n";
 interface AppSidebarProps {
   userRole?: UserRole;
 }
 export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
   const logout = useAuth(s => s.logout);
+  const { t } = useTranslation();
   const getNavItems = () => {
     switch (userRole) {
       case 'student':
         return [
-          { href: "/student/dashboard", icon: <Home />, label: "Home" },
-          { href: "/student/menu", icon: <Utensils />, label: "Weekly Menu" },
-          { href: "/student/dues", icon: <DollarSign />, label: "My Dues" },
-          { href: "/student/complaints", icon: <FileText />, label: "Complaints" },
-          { href: "/student/suggestions", icon: <Lightbulb />, label: "Suggestions" },
-          { href: "/student/notifications", icon: <Bell />, label: "Notifications" },
-          { href: "/student/rules", icon: <BookOpen />, label: "Mess Rules" },
+          { href: "/student/dashboard", icon: <Home />, label: t('sidebar_home') },
+          { href: "/student/menu", icon: <Utensils />, label: t('sidebar_weeklyMenu') },
+          { href: "/student/dues", icon: <DollarSign />, label: t('sidebar_myDues') },
+          { href: "/student/complaints", icon: <FileText />, label: t('sidebar_complaints') },
+          { href: "/student/suggestions", icon: <Lightbulb />, label: t('sidebar_suggestions') },
+          { href: "/student/notifications", icon: <Bell />, label: t('sidebar_notifications') },
+          { href: "/student/rules", icon: <BookOpen />, label: t('sidebar_messRules') },
         ];
       case 'manager':
         return [
-            { href: "/manager/dashboard", icon: <Home />, label: "Dashboard" },
-            { href: "/manager/students", icon: <Users />, label: "Student Management" },
-            { href: "/manager/menu", icon: <Utensils />, label: "Update Menu" },
-            { href: "/manager/financials", icon: <DollarSign />, label: "Financials" },
-            { href: "/manager/feedback", icon: <FileText />, label: "Complaints" },
-            { href: "/manager/suggestions", icon: <Lightbulb />, label: "Suggestions" },
-            { href: "/manager/notes", icon: <Notebook />, label: "Notes" },
-            { href: "/manager/broadcast", icon: <Send />, label: "Broadcast" },
+            { href: "/manager/dashboard", icon: <Home />, label: t('sidebar_dashboard') },
+            { href: "/manager/students", icon: <Users />, label: t('sidebar_studentManagement') },
+            { href: "/manager/menu", icon: <Utensils />, label: t('sidebar_updateMenu') },
+            { href: "/manager/financials", icon: <DollarSign />, label: t('sidebar_financials') },
+            { href: "/manager/feedback", icon: <FileText />, label: t('sidebar_manager_complaints') },
+            { href: "/manager/suggestions", icon: <Lightbulb />, label: t('sidebar_manager_suggestions') },
+            { href: "/manager/notes", icon: <Notebook />, label: t('sidebar_notes') },
+            { href: "/manager/broadcast", icon: <Send />, label: t('sidebar_broadcast') },
         ];
       case 'admin':
         return [
-          { href: "/admin/dashboard", icon: <ShieldCheck />, label: "Oversight" },
-          { href: "/admin/menu", icon: <Utensils />, label: "View Menu" },
+          { href: "/admin/dashboard", icon: <ShieldCheck />, label: t('sidebar_admin_oversight') },
+          { href: "/admin/menu", icon: <Utensils />, label: t('sidebar_admin_viewMenu') },
         ];
       default:
         return [];
@@ -55,7 +57,7 @@ export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
           <div className="h-8 w-8 rounded-md bg-orange-500 flex items-center justify-center text-white">
             <Utensils size={20} />
           </div>
-          <span className="text-lg font-semibold">Mess Connect</span>
+          <span className="text-lg font-semibold">{t('appName')}</span>
         </div>
       </SidebarHeader>
       <SidebarContent className="flex-grow">
@@ -76,13 +78,13 @@ export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
             {userRole === 'manager' && (
               <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                      <a href="/manager/settings"><Settings /> <span>Settings</span></a>
+                      <a href="/manager/settings"><Settings /> <span>{t('sidebar_settings')}</span></a>
                   </SidebarMenuButton>
               </SidebarMenuItem>
             )}
             <SidebarMenuItem>
                 <SidebarMenuButton onClick={logout}>
-                    <LogOut /> <span>Logout</span>
+                    <LogOut /> <span>{t('sidebar_logout')}</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>

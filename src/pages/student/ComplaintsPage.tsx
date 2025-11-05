@@ -16,12 +16,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageSquare, FileText } from "lucide-react";
 import { format } from "date-fns";
 import type { Complaint } from "@shared/types";
+import { useTranslation } from "@/lib/i18n";
 const complaintSchema = z.object({
   text: z.string().min(10, "Complaint must be at least 10 characters long."),
   image: z.instanceof(FileList).optional(),
 });
 type ComplaintFormValues = z.infer<typeof complaintSchema>;
 export function ComplaintsPage() {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [pastComplaints, setPastComplaints] = useState<Complaint[]>([]);
   const [loadingComplaints, setLoadingComplaints] = useState(true);
@@ -73,8 +75,8 @@ export function ComplaintsPage() {
       <div className="grid gap-8 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Submit a New Complaint</CardTitle>
-            <CardDescription>We are sorry for the inconvenience. Please describe your issue.</CardDescription>
+            <CardTitle>{t('submitNewComplaintTitle')}</CardTitle>
+            <CardDescription>{t('submitNewComplaintDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -84,9 +86,9 @@ export function ComplaintsPage() {
                   name="text"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Complaint Details</FormLabel>
+                      <FormLabel>{t('complaintDetailsLabel')}</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Please provide as much detail as possible..." rows={5} {...field} />
+                        <Textarea placeholder={t('complaintDetailsPlaceholder')} rows={5} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -97,7 +99,7 @@ export function ComplaintsPage() {
                   name="image"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Attach an Image (Optional)</FormLabel>
+                      <FormLabel>{t('attachImageLabel')}</FormLabel>
                       <FormControl>
                         <Input
                           type="file"
@@ -111,7 +113,7 @@ export function ComplaintsPage() {
                   )}
                 />
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Submitting..." : "Submit Complaint"}
+                  {isLoading ? t('submittingButton') : t('submitComplaintButton')}
                 </Button>
               </form>
             </Form>
@@ -119,8 +121,8 @@ export function ComplaintsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Your Past Complaints</CardTitle>
-            <CardDescription>Here is a list of your previously submitted complaints.</CardDescription>
+            <CardTitle>{t('pastComplaintsTitle')}</CardTitle>
+            <CardDescription>{t('pastComplaintsDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             {loadingComplaints ? (
@@ -132,7 +134,7 @@ export function ComplaintsPage() {
             ) : pastComplaints.length === 0 ? (
               <div className="text-center py-10 text-muted-foreground">
                 <FileText className="mx-auto h-12 w-12" />
-                <p className="mt-4">You have no past complaints.</p>
+                <p className="mt-4">{t('noPastComplaints')}</p>
               </div>
             ) : (
               <Accordion type="single" collapsible className="w-full">
@@ -142,21 +144,21 @@ export function ComplaintsPage() {
                       <div className="flex justify-between items-center w-full pr-4">
                         <span className="truncate max-w-xs">{complaint.text}</span>
                         <Badge variant={complaint.reply ? "default" : "secondary"}>
-                          {complaint.reply ? "Replied" : "Pending"}
+                          {complaint.reply ? t('replied') : t('pending')}
                         </Badge>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
                       <div className="space-y-4 px-2">
                         <p className="text-sm text-muted-foreground">{complaint.text}</p>
-                        <p className="text-xs text-muted-foreground">Submitted on: {format(new Date(complaint.createdAt), "PPp")}</p>
+                        <p className="text-xs text-muted-foreground">{t('date')}: {format(new Date(complaint.createdAt), "PPp")}</p>
                         {complaint.reply ? (
                           <div className="p-3 bg-muted rounded-md">
-                            <p className="text-sm font-semibold flex items-center"><MessageSquare className="h-4 w-4 mr-2" /> Manager's Reply:</p>
+                            <p className="text-sm font-semibold flex items-center"><MessageSquare className="h-4 w-4 mr-2" /> {t('managerReply')}</p>
                             <p className="text-sm text-muted-foreground pl-6">{complaint.reply}</p>
                           </div>
                         ) : (
-                          <p className="text-sm text-yellow-600">Awaiting reply from manager.</p>
+                          <p className="text-sm text-yellow-600">{t('awaitingReply')}</p>
                         )}
                       </div>
                     </AccordionContent>

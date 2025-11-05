@@ -11,6 +11,8 @@ import { Toaster, toast } from '@/components/ui/sonner';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { api } from '@/lib/api-client';
 import { Utensils, ArrowLeft } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
+import { LanguageToggle } from '@/components/LanguageToggle';
 declare global {
   interface Window {
     Razorpay: any;
@@ -23,6 +25,7 @@ const guestPaymentSchema = z.object({
 });
 type GuestPaymentFormValues = z.infer<typeof guestPaymentSchema>;
 export function GuestPaymentPage() {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm<GuestPaymentFormValues>({
     resolver: zodResolver(guestPaymentSchema),
@@ -83,7 +86,10 @@ export function GuestPaymentPage() {
   };
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative">
-      <ThemeToggle className="absolute top-4 right-4" />
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <LanguageToggle />
+        <ThemeToggle className="relative top-0 right-0" />
+      </div>
       <div className="absolute top-4 left-4">
         <Button asChild variant="outline" size="icon">
           <Link to="/"><ArrowLeft className="h-4 w-4" /></Link>
@@ -94,32 +100,32 @@ export function GuestPaymentPage() {
         <div className="p-4 bg-orange-500 text-white rounded-full shadow-lg">
           <Utensils className="h-8 w-8" />
         </div>
-        <h1 className="text-5xl font-bold text-foreground font-display">Mess Connect</h1>
+        <h1 className="text-5xl font-bold text-foreground font-display">{t('appName')}</h1>
       </div>
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Guest Payment</CardTitle>
-          <CardDescription>Make a one-time payment for your meal.</CardDescription>
+          <CardTitle>{t('guestPaymentTitle')}</CardTitle>
+          <CardDescription>{t('guestPaymentDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t('fullNameLabel')}</FormLabel><FormControl><Input placeholder={t('fullNamePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="phone" render={({ field }) => (
-                <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="9876543210" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t('phoneLabel')}</FormLabel><FormControl><Input placeholder={t('phonePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField
                 control={form.control}
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Amount (₹)</FormLabel>
+                    <FormLabel>{t('amountLabel')}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="e.g., 50"
+                        placeholder={t('amountPlaceholder')}
                         {...field}
                         onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
                         value={field.value ?? ''}
@@ -130,7 +136,7 @@ export function GuestPaymentPage() {
                 )}
               />
               <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white" disabled={isLoading}>
-                {isLoading ? 'Processing...' : 'Pay Now'}
+                {isLoading ? t('processingButton') : t('payNowButton')}
               </Button>
             </form>
           </Form>
