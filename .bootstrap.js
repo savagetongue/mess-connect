@@ -78,7 +78,8 @@ function updateWranglerJsonc() {
 
 function runSetupCommands() {
     const commands = [
-    "bun add razorpay"
+    "bun add razorpay",
+    "bun add -D @types/node"
 ];
     
     if (commands.length === 0) {
