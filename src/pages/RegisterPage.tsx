@@ -33,7 +33,7 @@ export function RegisterPage() {
     try {
       await api('/api/register', {
         method: 'POST',
-        body: JSON.stringify(values),
+        body: values,
       });
       toast.success('Registration successful!', {
         description: 'Your account is pending approval. Redirecting...',
