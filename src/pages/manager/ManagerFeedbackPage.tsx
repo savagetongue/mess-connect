@@ -9,11 +9,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, ExternalLink } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { Complaint } from "@shared/types";
 import { toast } from "@/components/ui/sonner";
 import { format } from "date-fns";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 export function ManagerFeedbackPage() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,9 +125,15 @@ export function ManagerFeedbackPage() {
             {selectedComplaint?.imageUrl && (
               <div>
                 <Label className="font-semibold">Attached Image:</Label>
-                <a href={selectedComplaint.imageUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline block">
-                  View Image <ExternalLink className="inline h-3 w-3 ml-1" />
-                </a>
+                <div className="mt-2 w-full rounded-md overflow-hidden border">
+                  <AspectRatio ratio={16 / 9}>
+                    <img
+                      src={selectedComplaint.imageUrl}
+                      alt="Complaint attachment"
+                      className="object-cover w-full h-full"
+                    />
+                  </AspectRatio>
+                </div>
               </div>
             )}
             <div className="space-y-2">
