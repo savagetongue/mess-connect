@@ -49,7 +49,7 @@ export function MyDuesPage() {
         body: JSON.stringify({ amount: monthlyFee }),
       });
       const options = {
-        key: 'rzp_test_RSUdCmphd81o8f', // Replace with your key
+        key: 'rzp_test_Rc4X9qW2OGg1Ch', // Updated Key
         amount: order.amount,
         currency: order.currency,
         name: 'Mess Connect',

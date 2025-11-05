@@ -166,18 +166,15 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const body = await c.req.json();
         const validation = CreateOrderSchema.safeParse(body);
         if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
-
         const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = c.env;
         if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
             return bad(c, 'Razorpay credentials are not configured.');
         }
-
         const options = {
             amount: validation.data.amount * 100, // amount in the smallest currency unit
             currency: "INR",
             receipt: `receipt_${crypto.randomUUID()}`
         };
-
         try {
             const response = await fetch('https://api.razorpay.com/v1/orders', {
                 method: 'POST',
@@ -187,8 +184,7 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
                 },
                 body: JSON.stringify(options)
             });
-
-            const order = await response.json();
+            const order = await response.json() as { id: string; amount: number; currency: string; error?: { description: string } };
             if (!response.ok) {
                 return bad(c, order.error?.description || 'Failed to create Razorpay order.');
             }
@@ -202,16 +198,12 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const body = await c.req.json();
         const validation = VerifyPaymentSchema.safeParse(body);
         if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
-
         const { RAZORPAY_KEY_SECRET } = c.env;
         if (!RAZORPAY_KEY_SECRET) {
             return bad(c, 'Razorpay secret is not configured.');
         }
-
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount, name, phone, studentId } = validation.data;
-
         const text = `${razorpay_order_id}|${razorpay_payment_id}`;
-        
         try {
             const key = await crypto.subtle.importKey(
                 'raw',
@@ -222,11 +214,9 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
             );
             const signatureBuffer = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(text));
             const generated_signature = Buffer.from(signatureBuffer).toString('hex');
-
             if (generated_signature !== razorpay_signature) {
                 return bad(c, 'Payment verification failed. Signature mismatch.');
             }
-
             // Signature is valid, proceed to create payment record
             if (studentId) {
                 const student = await new UserEntity(c.env, studentId).getState();
@@ -252,7 +242,6 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
                 return ok(c, { status: 'success', payment: guestPayment });
             }
             return bad(c, 'Invalid payment details');
-
         } catch (error) {
             console.error('Payment verification error:', error);
             return bad(c, 'An error occurred during payment verification.');
