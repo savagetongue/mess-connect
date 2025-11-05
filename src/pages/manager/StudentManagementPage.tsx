@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { AlertCircle, Search } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { User, UserStatus } from "@shared/types";
 import { toast } from "@/components/ui/sonner";
@@ -15,6 +16,7 @@ export function StudentManagementPage() {
   const [students, setStudents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const fetchStudents = async () => {
     try {
       setLoading(true);
@@ -51,8 +53,14 @@ export function StudentManagementPage() {
       default: return 'outline';
     }
   };
-  const pendingStudents = students.filter(s => s.status === 'pending');
-  const activeStudents = students.filter(s => s.status === 'approved' || s.status === 'rejected');
+  const filteredStudents = useMemo(() => {
+    return students.filter(student =>
+      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [students, searchTerm]);
+  const pendingStudents = filteredStudents.filter(s => s.status === 'pending');
+  const activeStudents = filteredStudents.filter(s => s.status === 'approved' || s.status === 'rejected');
   return (
     <AppLayout container>
       <div className="space-y-8">
@@ -80,8 +88,22 @@ export function StudentManagementPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>All Students</CardTitle>
-            <CardDescription>A list of all active and rejected students.</CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>All Students</CardTitle>
+                <CardDescription>A list of all active and rejected students.</CardDescription>
+              </div>
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search by name or email..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <StudentTable
@@ -114,7 +136,7 @@ function StudentTable({ students, loading, onAction, getBadgeVariant, isPending 
     );
   }
   if (students.length === 0) {
-    return <p className="text-sm text-muted-foreground">No students in this category.</p>;
+    return <p className="text-sm text-muted-foreground text-center py-4">No students found.</p>;
   }
   return (
     <Table>

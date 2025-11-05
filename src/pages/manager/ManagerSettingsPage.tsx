@@ -96,7 +96,13 @@ export function ManagerSettingsPage() {
                     <FormItem>
                       <FormLabel>Monthly Mess Fee (₹)</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="e.g., 3000" {...field} />
+                        <Input
+                          type="number"
+                          placeholder="e.g., 3000"
+                          {...field}
+                          onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
+                          value={field.value ?? ''}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
