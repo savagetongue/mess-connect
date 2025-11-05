@@ -48,7 +48,7 @@ export function ComplaintsPage() {
     try {
       const payload = {
         text: values.text,
-        imageUrl: values.image?.[0] ? `https://picsum.photos/seed/${Date.now()}/400/300` : undefined,
+        hasImage: !!values.image?.[0],
       };
       await api('/api/complaints', {
         method: 'POST',

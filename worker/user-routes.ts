@@ -20,7 +20,7 @@ const LoginSchema = z.object({
 });
 const ComplaintSchema = z.object({
     text: z.string().min(10, "Complaint must be at least 10 characters."),
-    imageUrl: z.string().url().optional(),
+    hasImage: z.boolean().optional(),
 });
 const SuggestionSchema = z.object({
     text: z.string().min(10, "Suggestion must be at least 10 characters."),
@@ -134,8 +134,10 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         const body = await c.req.json();
         const validation = ComplaintSchema.safeParse(body);
         if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
-        const { text, imageUrl } = validation.data;
-        const complaint = await ComplaintEntity.create(c.env, { id: crypto.randomUUID(), studentId: user.id, studentName: user.name, text, imageUrl, createdAt: Date.now() });
+        const { text, hasImage } = validation.data;
+        const complaintId = crypto.randomUUID();
+        const imageUrl = hasImage ? `https://picsum.photos/seed/${complaintId}/400/300` : undefined;
+        const complaint = await ComplaintEntity.create(c.env, { id: complaintId, studentId: user.id, studentName: user.name, text, imageUrl, createdAt: Date.now() });
         return ok(c, complaint);
     });
     app.post('/api/suggestions', async (c) => {
