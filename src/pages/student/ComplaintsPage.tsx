@@ -1,0 +1,162 @@
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { api } from "@/lib/api-client";
+import { toast } from "@/components/ui/sonner";
+import { useState, useEffect } from "react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle, MessageSquare, FileText } from "lucide-react";
+import { format } from "date-fns";
+import type { Complaint } from "@shared/types";
+const complaintSchema = z.object({
+  text: z.string().min(10, "Complaint must be at least 10 characters long."),
+  image: z.any().optional(),
+});
+type ComplaintFormValues = z.infer<typeof complaintSchema>;
+export function ComplaintsPage() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [pastComplaints, setPastComplaints] = useState<Complaint[]>([]);
+  const [loadingComplaints, setLoadingComplaints] = useState(true);
+  const fetchComplaints = async () => {
+    setLoadingComplaints(true);
+    try {
+      const data = await api<{ complaints: Complaint[] }>('/api/student/complaints');
+      setPastComplaints(data.complaints.sort((a, b) => b.createdAt - a.createdAt));
+    } catch (error) {
+      toast.error("Failed to load past complaints.");
+    } finally {
+      setLoadingComplaints(false);
+    }
+  };
+  useEffect(() => {
+    fetchComplaints();
+  }, []);
+  const form = useForm<ComplaintFormValues>({
+    resolver: zodResolver(complaintSchema),
+    defaultValues: { text: "" },
+  });
+  const onSubmit = async (values: ComplaintFormValues) => {
+    setIsLoading(true);
+    try {
+      const payload = {
+        text: values.text,
+        hasImage: !!values.image?.[0],
+      };
+      await api('/api/complaints', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      toast.success("Complaint submitted successfully!");
+      form.reset();
+      fetchComplaints(); // Refresh the list
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit complaint.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  return (
+    <AppLayout container>
+      <div className="grid gap-8 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Submit a New Complaint</CardTitle>
+            <CardDescription>We are sorry for the inconvenience. Please describe your issue.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="text"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Complaint Details</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Please provide as much detail as possible..." rows={5} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Attach an Image (Optional)</FormLabel>
+                      <FormControl>
+                        <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Submitting..." : "Submit Complaint"}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Past Complaints</CardTitle>
+            <CardDescription>Here is a list of your previously submitted complaints.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingComplaints ? (
+              <div className="space-y-2">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : pastComplaints.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground">
+                <FileText className="mx-auto h-12 w-12" />
+                <p className="mt-4">You have no past complaints.</p>
+              </div>
+            ) : (
+              <Accordion type="single" collapsible className="w-full">
+                {pastComplaints.map((complaint) => (
+                  <AccordionItem value={complaint.id} key={complaint.id}>
+                    <AccordionTrigger>
+                      <div className="flex justify-between items-center w-full pr-4">
+                        <span className="truncate max-w-xs">{complaint.text}</span>
+                        <Badge variant={complaint.reply ? "default" : "secondary"}>
+                          {complaint.reply ? "Replied" : "Pending"}
+                        </Badge>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-4 px-2">
+                        <p className="text-sm text-muted-foreground">{complaint.text}</p>
+                        <p className="text-xs text-muted-foreground">Submitted on: {format(new Date(complaint.createdAt), "PPp")}</p>
+                        {complaint.reply ? (
+                          <div className="p-3 bg-muted rounded-md">
+                            <p className="text-sm font-semibold flex items-center"><MessageSquare className="h-4 w-4 mr-2" /> Manager's Reply:</p>
+                            <p className="text-sm text-muted-foreground pl-6">{complaint.reply}</p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-yellow-600">Awaiting reply from manager.</p>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </AppLayout>
+  );
+}
