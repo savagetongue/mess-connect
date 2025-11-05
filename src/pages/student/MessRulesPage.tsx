@@ -5,9 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BookOpen, AlertCircle } from "lucide-react";
 import { api } from "@/lib/api-client";
-import { useTranslation } from "@/hooks/useTranslation";
 export function MessRulesPage() {
-  const { t } = useTranslation();
   const [rules, setRules] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +14,7 @@ export function MessRulesPage() {
       try {
         setLoading(true);
         const data = await api<{ messRules?: string }>('/api/settings');
-        setRules(data.messRules || t('noRulesSet'));
+        setRules(data.messRules || "No rules have been set by the manager yet.");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch mess rules.");
       } finally {
@@ -24,45 +22,41 @@ export function MessRulesPage() {
       }
     };
     fetchRules();
-  }, [t]);
+  }, []);
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-8 md:py-10 lg:py-12">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('messRulesTitle')}</CardTitle>
-              <CardDescription>{t('messRulesDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              ) : error ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>{t('error')}</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
+    <AppLayout container>
+      <Card>
+        <CardHeader>
+          <CardTitle>Mess Rules & Regulations</CardTitle>
+          <CardDescription>Please adhere to the following rules to maintain a pleasant dining environment.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          ) : error ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : (
+            <div className="prose dark:prose-invert max-w-none p-4 border rounded-md bg-muted/50 whitespace-pre-wrap">
+              {rules ? (
+                <p>{rules}</p>
               ) : (
-                <div className="prose dark:prose-invert max-w-none p-4 border rounded-md bg-muted/50 whitespace-pre-wrap">
-                  {rules === t('noRulesSet') ? (
-                    <div className="text-center py-10 text-muted-foreground">
-                      <BookOpen className="mx-auto h-12 w-12" />
-                      <p className="mt-4">{rules}</p>
-                    </div>
-                  ) : (
-                    <p>{rules}</p>
-                  )}
+                <div className="text-center py-10 text-muted-foreground">
+                  <BookOpen className="mx-auto h-12 w-12" />
+                  <p className="mt-4">No rules have been set by the manager yet.</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </AppLayout>
   );
 }
