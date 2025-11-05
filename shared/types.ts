@@ -18,7 +18,7 @@ export interface Complaint {
   studentId: string;
   studentName: string;
   text: string;
-  imageUrl?: string;
+  imageBase64?: string;
   reply?: string;
   createdAt: number;
 }

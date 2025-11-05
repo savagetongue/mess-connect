@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertCircle } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { Complaint } from "@shared/types";
@@ -72,8 +72,8 @@ export function AdminDashboardPage() {
                     <TableCell className="font-medium">{complaint.studentName}</TableCell>
                     <TableCell className="max-w-xs truncate">{complaint.text}</TableCell>
                     <TableCell>
-                      {complaint.imageUrl ? (
-                        <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setSelectedImage(complaint.imageUrl!)}>
+                      {complaint.imageBase64 ? (
+                        <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setSelectedImage(complaint.imageBase64!)}>
                           View Image
                         </Button>
                       ) : (
