@@ -32,7 +32,8 @@ export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
             { href: "/manager/students", icon: <Users />, label: "Student Management" },
             { href: "/manager/menu", icon: <Utensils />, label: "Update Menu" },
             { href: "/manager/financials", icon: <DollarSign />, label: "Financials" },
-            { href: "/manager/feedback", icon: <FileText />, label: "Feedback" },
+            { href: "/manager/feedback", icon: <FileText />, label: "Complaints" },
+            { href: "/manager/suggestions", icon: <Lightbulb />, label: "Suggestions" },
             { href: "/manager/notes", icon: <Notebook />, label: "Notes" },
             { href: "/manager/broadcast", icon: <Send />, label: "Broadcast" },
         ];

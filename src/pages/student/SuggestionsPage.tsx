@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "@/components/ui/sonner";
 import { useState } from "react";
+import { api } from "@/lib/api-client";
 const suggestionSchema = z.object({
   text: z.string().min(10, "Suggestion must be at least 10 characters long."),
 });
@@ -20,11 +21,18 @@ export function SuggestionsPage() {
   });
   const onSubmit = async (values: SuggestionFormValues) => {
     setIsLoading(true);
-    // Placeholder for API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success("Thank you for your suggestion!");
-    form.reset();
-    setIsLoading(false);
+    try {
+      await api('/api/suggestions', {
+        method: 'POST',
+        body: JSON.stringify(values),
+      });
+      toast.success("Thank you for your suggestion!");
+      form.reset();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit suggestion.");
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <AppLayout container>

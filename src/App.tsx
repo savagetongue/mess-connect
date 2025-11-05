@@ -17,6 +17,7 @@ import { StudentManagementPage } from '@/pages/manager/StudentManagementPage';
 import { UpdateMenuPage } from '@/pages/manager/UpdateMenuPage';
 import { ManagerFinancialsPage } from '@/pages/manager/ManagerFinancialsPage';
 import { ManagerFeedbackPage } from '@/pages/manager/ManagerFeedbackPage';
+import { ManagerSuggestionsPage } from '@/pages/manager/ManagerSuggestionsPage';
 import { ManagerNotesPage } from '@/pages/manager/ManagerNotesPage';
 import { ManagerBroadcastPage } from '@/pages/manager/ManagerBroadcastPage';
 import { ManagerSettingsPage } from '@/pages/manager/ManagerSettingsPage';
@@ -43,6 +44,7 @@ export function App() {
     { path: "/manager/menu", element: <ProtectedRoute role="manager"><UpdateMenuPage /></ProtectedRoute> },
     { path: "/manager/financials", element: <ProtectedRoute role="manager"><ManagerFinancialsPage /></ProtectedRoute> },
     { path: "/manager/feedback", element: <ProtectedRoute role="manager"><ManagerFeedbackPage /></ProtectedRoute> },
+    { path: "/manager/suggestions", element: <ProtectedRoute role="manager"><ManagerSuggestionsPage /></ProtectedRoute> },
     { path: "/manager/notes", element: <ProtectedRoute role="manager"><ManagerNotesPage /></ProtectedRoute> },
     { path: "/manager/broadcast", element: <ProtectedRoute role="manager"><ManagerBroadcastPage /></ProtectedRoute> },
     { path: "/manager/settings", element: <ProtectedRoute role="manager"><ManagerSettingsPage /></ProtectedRoute> },
