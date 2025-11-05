@@ -1,75 +1,89 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { UserEntity, ChatBoardEntity } from "./entities";
+import { UserEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-
+import { z } from 'zod';
+const RegisterSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Invalid email address"),
+    phone: z.string().min(10, "Phone number must be at least 10 digits"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+});
+const LoginSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(1),
+});
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
-  app.get('/api/test', (c) => c.json({ success: true, data: { name: 'CF Workers Demo' }}));
-
-  // USERS
-  app.get('/api/users', async (c) => {
-    await UserEntity.ensureSeed(c.env);
-    const cq = c.req.query('cursor');
-    const lq = c.req.query('limit');
-    const page = await UserEntity.list(c.env, cq ?? null, lq ? Math.max(1, (Number(lq) | 0)) : undefined);
-    return ok(c, page);
-  });
-
-  app.post('/api/users', async (c) => {
-    const { name } = (await c.req.json()) as { name?: string };
-    if (!name?.trim()) return bad(c, 'name required');
-    return ok(c, await UserEntity.create(c.env, { id: crypto.randomUUID(), name: name.trim() }));
-  });
-
-  // CHATS
-  app.get('/api/chats', async (c) => {
-    await ChatBoardEntity.ensureSeed(c.env);
-    const cq = c.req.query('cursor');
-    const lq = c.req.query('limit');
-    const page = await ChatBoardEntity.list(c.env, cq ?? null, lq ? Math.max(1, (Number(lq) | 0)) : undefined);
-    return ok(c, page);
-  });
-
-  app.post('/api/chats', async (c) => {
-    const { title } = (await c.req.json()) as { title?: string };
-    if (!title?.trim()) return bad(c, 'title required');
-    const created = await ChatBoardEntity.create(c.env, { id: crypto.randomUUID(), title: title.trim(), messages: [] });
-    return ok(c, { id: created.id, title: created.title });
-  });
-
-  // MESSAGES
-  app.get('/api/chats/:chatId/messages', async (c) => {
-    const chat = new ChatBoardEntity(c.env, c.req.param('chatId'));
-    if (!await chat.exists()) return notFound(c, 'chat not found');
-    return ok(c, await chat.listMessages());
-  });
-
-  app.post('/api/chats/:chatId/messages', async (c) => {
-    const chatId = c.req.param('chatId');
-    const { userId, text } = (await c.req.json()) as { userId?: string; text?: string };
-    if (!isStr(userId) || !text?.trim()) return bad(c, 'userId and text required');
-    const chat = new ChatBoardEntity(c.env, chatId);
-    if (!await chat.exists()) return notFound(c, 'chat not found');
-    return ok(c, await chat.sendMessage(userId, text.trim()));
-  });
-
-  // DELETE: Users
-  app.delete('/api/users/:id', async (c) => ok(c, { id: c.req.param('id'), deleted: await UserEntity.delete(c.env, c.req.param('id')) }));
-
-  app.post('/api/users/deleteMany', async (c) => {
-    const { ids } = (await c.req.json()) as { ids?: string[] };
-    const list = ids?.filter(isStr) ?? [];
-    if (list.length === 0) return bad(c, 'ids required');
-    return ok(c, { deletedCount: await UserEntity.deleteMany(c.env, list), ids: list });
-  });
-
-  // DELETE: Chats
-  app.delete('/api/chats/:id', async (c) => ok(c, { id: c.req.param('id'), deleted: await ChatBoardEntity.delete(c.env, c.req.param('id')) }));
-
-  app.post('/api/chats/deleteMany', async (c) => {
-    const { ids } = (await c.req.json()) as { ids?: string[] };
-    const list = ids?.filter(isStr) ?? [];
-    if (list.length === 0) return bad(c, 'ids required');
-    return ok(c, { deletedCount: await ChatBoardEntity.deleteMany(c.env, list), ids: list });
-  });
+    // Ensure admin and manager exist
+    app.use('/api/*', async (c, next) => {
+        const adminEmail = 'admin@messconnect.com';
+        const managerEmail = 'manager@messconnect.com';
+        const adminUser = new UserEntity(c.env, adminEmail);
+        const managerUser = new UserEntity(c.env, managerEmail);
+        if (!await adminUser.exists()) {
+            await UserEntity.create(c.env, {
+                id: adminEmail,
+                name: 'Admin',
+                phone: '0000000000',
+                passwordHash: 'password', // In a real app, this would be a strong hash
+                role: 'admin',
+                status: 'approved',
+            });
+        }
+        if (!await managerUser.exists()) {
+            await UserEntity.create(c.env, {
+                id: managerEmail,
+                name: 'Manager',
+                phone: '1111111111',
+                passwordHash: 'password', // In a real app, this would be a strong hash
+                role: 'manager',
+                status: 'approved',
+            });
+        }
+        await next();
+    });
+    app.post('/api/register', async (c) => {
+        const body = await c.req.json();
+        const validation = RegisterSchema.safeParse(body);
+        if (!validation.success) {
+            return bad(c, validation.error.errors.map(e => e.message).join(', '));
+        }
+        const { name, email, phone, password } = validation.data;
+        const existingUser = new UserEntity(c.env, email);
+        if (await existingUser.exists()) {
+            return bad(c, 'User with this email already exists.');
+        }
+        const newUser = await UserEntity.create(c.env, {
+            id: email,
+            name,
+            phone,
+            passwordHash: password, // Plain text for now, should be hashed
+            role: 'student',
+            status: 'pending',
+        });
+        const { passwordHash, ...userResponse } = newUser;
+        return ok(c, userResponse);
+    });
+    app.post('/api/login', async (c) => {
+        const body = await c.req.json();
+        const validation = LoginSchema.safeParse(body);
+        if (!validation.success) {
+            return bad(c, 'Invalid email or password format.');
+        }
+        const { email, password } = validation.data;
+        const userEntity = new UserEntity(c.env, email);
+        if (!await userEntity.exists()) {
+            return notFound(c, 'User not found.');
+        }
+        const user = await userEntity.getState();
+        if (user.passwordHash !== password) {
+            return bad(c, 'Invalid credentials.');
+        }
+        if (user.role === 'student' && user.status !== 'approved') {
+            return c.json({ success: true, data: { status: user.status } }, 200);
+        }
+        const { passwordHash, ...userResponse } = user;
+        // In a real app, you'd return a JWT here
+        return ok(c, { ...userResponse, token: `fake-token-for-${user.id}` });
+    });
 }
