@@ -60,8 +60,9 @@ const FeeSchema = z.object({
 });
 const CreateOrderSchema = z.object({
     amount: z.number().positive(),
-    name: z.string().optional(),
-    phone: z.string().optional(),
+    name: z.string().optional(), // For guest
+    phone: z.string().optional(), // For guest
+    studentId: z.string().optional(), // For student
 });
 const VerifyPaymentSchema = z.object({
     razorpay_order_id: z.string(),
@@ -162,6 +163,7 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
     });
     // PAYMENT FLOW
     app.post('/api/payments/create-order', async (c) => {
+        const user = c.get('user');
         const body = await c.req.json();
         const validation = CreateOrderSchema.safeParse(body);
         if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
@@ -169,10 +171,23 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
         if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
             return bad(c, "Razorpay credentials are not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your worker's environment variables.");
         }
+        const notes: Record<string, string> = {
+            app_name: "Mess Connect",
+        };
+        if (user && user.role === 'student') {
+            notes.payment_type = "student_due";
+            notes.student_id = user.id;
+            notes.student_name = user.name;
+        } else if (validation.data.name && validation.data.phone) {
+            notes.payment_type = "guest_payment";
+            notes.guest_name = validation.data.name;
+            notes.guest_phone = validation.data.phone;
+        }
         const options = {
             amount: validation.data.amount * 100, // amount in the smallest currency unit
             currency: "INR",
-            receipt: `rcpt_${Date.now()}`
+            receipt: `rcpt_${Date.now()}`,
+            notes: notes,
         };
         try {
             const response = await fetch('https://api.razorpay.com/v1/orders', {
@@ -212,7 +227,7 @@ export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }
                 ['sign']
             );
             const signatureBuffer = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(text));
-            const generated_signature = Array.from(new Uint8Array(signatureBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+            const generated_signature = Array.from(new UintArray(signatureBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
             if (generated_signature !== razorpay_signature) {
                 return bad(c, 'Payment verification failed. Signature mismatch.');
             }
