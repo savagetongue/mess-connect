@@ -63,6 +63,7 @@ export function ManagerFinancialsPage() {
       ...student,
       paymentStatus: payment ? "Paid" : "Due",
       amountPaid: payment ? payment.amount : 0,
+      paymentMethod: payment?.method
     };
   });
   return (
@@ -115,7 +116,9 @@ export function ManagerFinancialsPage() {
                                 Mark as Paid (Cash)
                               </Button>
                             ) : (
-                              <span className="text-sm text-muted-foreground">Paid ₹{student.amountPaid}</span>
+                              <span className="text-sm text-muted-foreground capitalize">
+                                Paid ₹{student.amountPaid} via {student.paymentMethod}
+                              </span>
                             )}
                           </TableCell>
                         </TableRow>
@@ -137,7 +140,7 @@ export function ManagerFinancialsPage() {
                   <Skeleton className="h-64 w-full" />
                 ) : data?.guestPayments && data.guestPayments.length > 0 ? (
                   <div className="space-y-4">
-                    {data.guestPayments.map(gp => (
+                    {data.guestPayments.sort((a,b) => b.createdAt - a.createdAt).map(gp => (
                       <div key={gp.id} className="flex justify-between items-center text-sm">
                         <div>
                           <p className="font-medium">{gp.name}</p>
