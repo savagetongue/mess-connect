@@ -18,13 +18,18 @@ interface FinancialsData {
 }
 export function ManagerFinancialsPage() {
   const [data, setData] = useState<FinancialsData | null>(null);
+  const [monthlyFee, setMonthlyFee] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fetchFinancials = async () => {
     try {
       setLoading(true);
-      const financialData = await api<FinancialsData>('/api/financials');
+      const [financialData, feeData] = await Promise.all([
+        api<FinancialsData>('/api/financials'),
+        api<{ monthlyFee: number }>('/api/settings/fee')
+      ]);
       setData(financialData);
+      setMonthlyFee(feeData.monthlyFee);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch financial data.");
     } finally {
@@ -35,10 +40,14 @@ export function ManagerFinancialsPage() {
     fetchFinancials();
   }, []);
   const handleMarkAsPaid = async (studentId: string) => {
+    if (!monthlyFee) {
+      toast.error("Monthly fee is not set. Please set it in settings.");
+      return;
+    }
     try {
       await api('/api/payments/mark-as-paid', {
         method: 'POST',
-        body: JSON.stringify({ studentId, amount: 3000 }), // Assuming a fixed amount for now
+        body: JSON.stringify({ studentId, amount: monthlyFee }),
       });
       toast.success("Payment marked as paid successfully.");
       fetchFinancials(); // Refresh data
