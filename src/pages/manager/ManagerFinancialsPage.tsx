@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, DollarSign } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertCircle, DollarSign, Search } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { User, Payment, GuestPayment } from "@shared/types";
 import { format } from "date-fns";
@@ -21,6 +23,8 @@ export function ManagerFinancialsPage() {
   const [monthlyFee, setMonthlyFee] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const fetchFinancials = async () => {
     try {
       setLoading(true);
@@ -55,17 +59,25 @@ export function ManagerFinancialsPage() {
       toast.error(err instanceof Error ? err.message : "Failed to mark as paid.");
     }
   };
-  const currentMonthStr = format(new Date(), "yyyy-MM");
-  const approvedStudents = data?.students.filter(s => s.status === 'approved') ?? [];
-  const studentPaymentStatus = approvedStudents.map(student => {
-    const payment = data?.payments.find(p => p.userId === student.id && p.month === currentMonthStr);
-    return {
-      ...student,
-      paymentStatus: payment ? "Paid" : "Due",
-      amountPaid: payment ? payment.amount : 0,
-      paymentMethod: payment?.method
-    };
-  });
+  const studentPaymentStatus = useMemo(() => {
+    const currentMonthStr = format(new Date(), "yyyy-MM");
+    const approvedStudents = data?.students.filter(s => s.status === 'approved') ?? [];
+    return approvedStudents
+      .map(student => {
+        const payment = data?.payments.find(p => p.userId === student.id && p.month === currentMonthStr);
+        return {
+          ...student,
+          paymentStatus: payment ? "Paid" : "Due",
+          amountPaid: payment ? payment.amount : 0,
+          paymentMethod: payment?.method
+        };
+      })
+      .filter(student => {
+        const nameMatch = student.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const statusMatch = statusFilter === 'all' || student.paymentStatus.toLowerCase() === statusFilter;
+        return nameMatch && statusMatch;
+      });
+  }, [data, searchTerm, statusFilter]);
   return (
     <AppLayout container>
       <div className="space-y-8">
@@ -86,12 +98,40 @@ export function ManagerFinancialsPage() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Student Dues - {format(new Date(), "MMMM yyyy")}</CardTitle>
-                <CardDescription>Status of monthly payments from all approved students.</CardDescription>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <CardTitle>Student Dues - {format(new Date(), "MMMM yyyy")}</CardTitle>
+                    <CardDescription>Status of monthly payments from all approved students.</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="relative flex-grow">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="search"
+                        placeholder="Search by name..."
+                        className="pl-8 w-full"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="due">Due</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {loading ? (
                   <Skeleton className="h-64 w-full" />
+                ) : studentPaymentStatus.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">No students match your criteria.</p>
                 ) : (
                   <Table>
                     <TableHeader>
