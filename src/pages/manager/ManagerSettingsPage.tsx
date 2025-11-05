@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -46,7 +46,7 @@ export function ManagerSettingsPage() {
     };
     fetchFee();
   }, [form]);
-  const onFeeSubmit = async (values: FeeFormValues) => {
+  const onFeeSubmit: SubmitHandler<FeeFormValues> = async (values) => {
     try {
       await api('/api/settings/fee', {
         method: 'POST',
