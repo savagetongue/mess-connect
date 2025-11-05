@@ -7,9 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Utensils } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { WeeklyMenu } from "@shared/types";
-import { useTranslation } from "@/hooks/useTranslation";
 export function WeeklyMenuPage() {
-  const { t } = useTranslation();
   const [menu, setMenu] = useState<WeeklyMenu | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,19 +18,19 @@ export function WeeklyMenuPage() {
         const menuData = await api<WeeklyMenu>('/api/menu');
         setMenu(menuData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('fetchMenuError'));
+        setError(err instanceof Error ? err.message : "Failed to fetch menu. The manager may not have set it yet.");
       } finally {
         setLoading(false);
       }
     };
     fetchMenu();
-  }, [t]);
+  }, []);
   return (
-    <AppLayout>
+    <AppLayout container>
       <Card>
         <CardHeader>
-          <CardTitle>{t('weeklyMenuTitle')}</CardTitle>
-          <CardDescription>{t('weeklyMenuDescription')}</CardDescription>
+          <CardTitle>Weekly Menu</CardTitle>
+          <CardDescription>Here is the meal plan for the upcoming week.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -45,17 +43,17 @@ export function WeeklyMenuPage() {
           ) : error ? (
             <Alert variant="destructive">
               <Utensils className="h-4 w-4" />
-              <AlertTitle>{t('error')}</AlertTitle>
+              <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[100px]">{t('day')}</TableHead>
-                  <TableHead>{t('breakfast')}</TableHead>
-                  <TableHead>{t('lunch')}</TableHead>
-                  <TableHead>{t('dinner')}</TableHead>
+                  <TableHead className="w-[100px]">Day</TableHead>
+                  <TableHead>Breakfast</TableHead>
+                  <TableHead>Lunch</TableHead>
+                  <TableHead>Dinner</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
