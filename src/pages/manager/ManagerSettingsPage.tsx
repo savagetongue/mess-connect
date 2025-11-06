@@ -55,7 +55,7 @@ export function ManagerSettingsPage() {
       }
     };
     fetchSettings();
-  }, [feeForm.setValue, rulesForm.setValue]);
+  }, [feeForm, rulesForm]);
   const onFeeSubmit = async (values: FeeFormValues) => {
     try {
       await api('/api/settings/fee', {
