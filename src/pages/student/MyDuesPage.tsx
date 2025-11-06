@@ -12,7 +12,7 @@ import type { Payment } from "@shared/types";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation } from "@/hooks/useTranslation";
 declare global {
   interface Window {
     Razorpay: any;

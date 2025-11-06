@@ -36,7 +36,7 @@ export function GuestPaymentPage() {
     try {
       const order = await api<{ id: string; amount: number; currency: string }>('/api/payments/create-order', {
         method: 'POST',
-        body: { amount: values.amount, name: values.name, phone: values.phone },
+        body: JSON.stringify({ amount: values.amount, name: values.name, phone: values.phone }),
       });
       const options = {
         key: 'rzp_test_Rc4X9qW2OGg1Ch',
@@ -49,12 +49,12 @@ export function GuestPaymentPage() {
           try {
             await api('/api/payments/verify-payment', {
               method: 'POST',
-              body: {
+              body: JSON.stringify({
                 ...response,
                 amount: values.amount,
                 name: values.name,
                 phone: values.phone,
-              },
+              }),
             });
             toast.success('Payment successful!', { description: 'Thank you for dining with us.' });
             form.reset();

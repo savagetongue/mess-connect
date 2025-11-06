@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageSquare, FileText } from "lucide-react";
 import { format } from "date-fns";
 import type { Complaint } from "@shared/types";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation } from '@/hooks/useTranslation';
 const complaintSchema = z.object({
   text: z.string().min(10, "Complaint must be at least 10 characters long."),
   image: z.instanceof(FileList).optional(),
