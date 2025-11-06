@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Utensils, DollarSign, FileText, Lightbulb, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation } from "@/hooks/useTranslation";
 export function StudentDashboardPage() {
   const user = useAuth(s => s.user);
   const { t } = useTranslation();

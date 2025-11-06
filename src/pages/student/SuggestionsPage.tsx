@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Lightbulb, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import type { Suggestion } from "@shared/types";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation } from "@/hooks/useTranslation";
 const suggestionSchema = z.object({
   text: z.string().min(10, "Suggestion must be at least 10 characters long."),
 });

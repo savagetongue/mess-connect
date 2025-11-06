@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BookOpen, AlertCircle } from "lucide-react";
 import { api } from "@/lib/api-client";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation } from "@/hooks/useTranslation";
 export function MessRulesPage() {
   const { t } = useTranslation();
   const [rules, setRules] = useState<string | null>(null);

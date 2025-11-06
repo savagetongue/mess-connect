@@ -11,7 +11,7 @@ import { Toaster, toast } from '@/components/ui/sonner';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { api } from '@/lib/api-client';
 import { Utensils } from 'lucide-react';
-import { useTranslation } from '@/lib/i18n';
+import { useTranslation } from '@/hooks/useTranslation';
 import { LanguageToggle } from '@/components/LanguageToggle';
 const registerSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -33,7 +33,7 @@ export function RegisterPage() {
     try {
       await api('/api/register', {
         method: 'POST',
-        body: values,
+        body: JSON.stringify(values),
       });
       toast.success('Registration successful!', {
         description: 'Your account is pending approval. Redirecting...',
