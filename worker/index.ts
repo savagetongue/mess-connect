@@ -24,7 +24,7 @@ export interface ClientErrorReport {
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 app.use('*', logger());
 app.use('/api/*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization'] }));
-app.route('/', userRoutes);
+userRoutes(app);
 app.get('/api/health', (c) => c.json({ success: true, data: { status: 'healthy', timestamp: new Date().toISOString() }}));
 app.post('/api/client-errors', async (c) => {
   try {
