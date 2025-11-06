@@ -2,6 +2,16 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity, SuggestionEntity, SettingEntity, NotificationEntity } from "./entities";
 import { ok, bad, notFound, Index } from './core-utils';
+
+function bufferToBase64(buffer: ArrayBuffer): string {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 import { z } from 'zod';
 import type { User, WeeklyMenu, Complaint, Note, Payment } from "@shared/types";
 import { format } from "date-fns";
@@ -145,7 +155,7 @@ app.post('/api/complaints', async (c) => {
     let imageBase64: string | undefined = undefined;
     if (imageFile && imageFile.size > 0) {
         const buffer = await imageFile.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+        const base64 = bufferToBase64(buffer);
         imageBase64 = `data:${imageFile.type};base64,${base64}`;
     }
     const complaint = await ComplaintEntity.create(c.env, {
@@ -491,6 +501,17 @@ app.post('/api/settings/clear-all-data', async (c) => {
     }
     return ok(c, { message: 'All application data has been cleared.' });
 });
+app.get('/api/settings/fee', async (c) => {
+    const user = c.get('user');
+    if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+    const settingEntity = new SettingEntity(c.env, 'singleton');
+    if (!await settingEntity.exists()) {
+        await settingEntity.save(SettingEntity.initialState);
+    }
+    const settings = await settingEntity.getState();
+    return ok(c, { monthlyFee: settings.monthlyFee });
+});
+
 app.post('/api/settings/fee', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
