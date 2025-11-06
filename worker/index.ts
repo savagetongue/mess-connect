@@ -3,7 +3,8 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { userRoutes } from './user-routes';
-import { Env, GlobalDurableObject, HonoVariables } from './core-utils';
+import { Env, GlobalDurableObject } from './core-utils';
+import { HonoVariables } from './user-routes';
 // Need to export GlobalDurableObject to make it available in wrangler
 export { GlobalDurableObject };
 export interface ClientErrorReport {
@@ -23,7 +24,7 @@ export interface ClientErrorReport {
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 app.use('*', logger());
 app.use('/api/*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization'] }));
-userRoutes(app);
+app.route('/', userRoutes);
 app.get('/api/health', (c) => c.json({ success: true, data: { status: 'healthy', timestamp: new Date().toISOString() }}));
 app.post('/api/client-errors', async (c) => {
   try {
