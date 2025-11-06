@@ -1,4 +1,5 @@
 import React from "react";
+import { Toaster } from "sonner";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +14,7 @@ export function AppLayout({ children, container = false, className, contentClass
   const user = useAuth(s => s.user);
   return (
     <SidebarProvider defaultOpen={false}>
+      <Toaster />
       <AppSidebar userRole={user?.role} />
       <SidebarInset className={className}>
         <header className="absolute top-2 left-2 right-2 z-20 flex items-center justify-between">
