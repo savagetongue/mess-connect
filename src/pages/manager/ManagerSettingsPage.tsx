@@ -24,7 +24,7 @@ import { api } from "@/lib/api-client";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 const feeSchema = z.object({
-  monthlyFee: z.coerce.number().positive({ message: "Fee must be a positive number." }),
+  monthlyFee: z.number().positive({ message: "Fee must be a positive number." }),
 });
 type FeeFormValues = z.infer<typeof feeSchema>;
 const rulesSchema = z.object({
@@ -36,7 +36,7 @@ export function ManagerSettingsPage() {
   const logout = useAuth(s => s.logout);
   const feeForm = useForm<FeeFormValues>({
     resolver: zodResolver(feeSchema),
-    defaultValues: { monthlyFee: undefined },
+    defaultValues: { monthlyFee: 0 },
   });
   const rulesForm = useForm<RulesFormValues>({
     resolver: zodResolver(rulesSchema),
@@ -55,7 +55,7 @@ export function ManagerSettingsPage() {
       }
     };
     fetchSettings();
-  }, [feeForm, rulesForm]);
+  }, [feeForm.setValue, rulesForm.setValue]);
   const onFeeSubmit = async (values: FeeFormValues) => {
     try {
       await api('/api/settings/fee', {

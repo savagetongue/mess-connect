@@ -21,7 +21,7 @@ declare global {
 const guestPaymentSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   phone: z.string().min(10, { message: 'Please enter a valid phone number.' }),
-  amount: z.coerce.number().positive({ message: 'Amount must be a positive number.' }),
+  amount: z.number().positive({ message: 'Amount must be a positive number.' }),
 });
 type GuestPaymentFormValues = z.infer<typeof guestPaymentSchema>;
 export function GuestPaymentPage() {
@@ -29,7 +29,7 @@ export function GuestPaymentPage() {
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm<GuestPaymentFormValues>({
     resolver: zodResolver(guestPaymentSchema),
-    defaultValues: { name: '', phone: '', amount: undefined },
+    defaultValues: { name: '', phone: '', amount: 0 },
   });
   const onSubmit = async (values: GuestPaymentFormValues) => {
     setIsLoading(true);
