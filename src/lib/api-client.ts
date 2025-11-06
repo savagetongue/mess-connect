@@ -19,7 +19,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   };
 
   if (body) {
-    config.body = isFormData ? body : JSON.stringify(body);
+    config.body = body;
   }
 
   const res = await fetch(path, config);
