@@ -7,10 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, DollarSign, Search } from "lucide-react";
+import { AlertCircle, DollarSign, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { User, Payment, GuestPayment } from "@shared/types";
-import { format } from "date-fns";
+import { format, subMonths, addMonths, getYear, getMonth } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 interface FinancialsData {
@@ -25,6 +25,7 @@ export function ManagerFinancialsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const fetchFinancials = async () => {
     try {
       setLoading(true);
@@ -60,11 +61,11 @@ export function ManagerFinancialsPage() {
     }
   };
   const studentPaymentStatus = useMemo(() => {
-    const currentMonthStr = format(new Date(), "yyyy-MM");
+    const selectedMonthStr = format(selectedDate, "yyyy-MM");
     const approvedStudents = data?.students.filter(s => s.status === 'approved') ?? [];
     return approvedStudents
       .map(student => {
-        const payment = data?.payments.find(p => p.userId === student.id && p.month === currentMonthStr);
+        const payment = data?.payments.find(p => p.userId === student.id && p.month === selectedMonthStr);
         return {
           ...student,
           paymentStatus: payment ? "Paid" : "Due",
@@ -77,7 +78,16 @@ export function ManagerFinancialsPage() {
         const statusMatch = statusFilter === 'all' || student.paymentStatus.toLowerCase() === statusFilter;
         return nameMatch && statusMatch;
       });
-  }, [data, searchTerm, statusFilter]);
+  }, [data, searchTerm, statusFilter, selectedDate]);
+  const guestPaymentsForMonth = useMemo(() => {
+    return data?.guestPayments.filter(gp => {
+      const paymentDate = new Date(gp.createdAt);
+      return getYear(paymentDate) === getYear(selectedDate) && getMonth(paymentDate) === getMonth(selectedDate);
+    }) ?? [];
+  }, [data, selectedDate]);
+  const handleMonthChange = (direction: 'prev' | 'next') => {
+    setSelectedDate(currentDate => direction === 'prev' ? subMonths(currentDate, 1) : addMonths(currentDate, 1));
+  };
   return (
     <AppLayout container>
       <div className="space-y-8">
@@ -99,9 +109,10 @@ export function ManagerFinancialsPage() {
             <Card>
               <CardHeader>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div>
-                    <CardTitle>Student Dues - {format(new Date(), "MMMM yyyy")}</CardTitle>
-                    <CardDescription>Status of monthly payments from all approved students.</CardDescription>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={() => handleMonthChange('prev')}><ChevronLeft className="h-4 w-4" /></Button>
+                    <CardTitle className="text-lg sm:text-xl whitespace-nowrap">Student Dues - {format(selectedDate, "MMMM yyyy")}</CardTitle>
+                    <Button variant="outline" size="icon" onClick={() => handleMonthChange('next')}><ChevronRight className="h-4 w-4" /></Button>
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     <div className="relative flex-grow">
@@ -131,7 +142,7 @@ export function ManagerFinancialsPage() {
                 {loading ? (
                   <Skeleton className="h-64 w-full" />
                 ) : studentPaymentStatus.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">No students match your criteria.</p>
+                  <p className="text-sm text-muted-foreground text-center py-8">No students match your criteria for this month.</p>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -173,14 +184,14 @@ export function ManagerFinancialsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Guest Payments</CardTitle>
-                <CardDescription>One-time payments from guests.</CardDescription>
+                <CardDescription>One-time payments from guests for {format(selectedDate, "MMMM yyyy")}.</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
                   <Skeleton className="h-64 w-full" />
-                ) : data?.guestPayments && data.guestPayments.length > 0 ? (
+                ) : guestPaymentsForMonth.length > 0 ? (
                   <div className="space-y-4">
-                    {data.guestPayments.sort((a,b) => b.createdAt - a.createdAt).map(gp => (
+                    {guestPaymentsForMonth.sort((a,b) => b.createdAt - a.createdAt).map(gp => (
                       <div key={gp.id} className="flex justify-between items-center text-sm">
                         <div>
                           <p className="font-medium">{gp.name}</p>
@@ -193,7 +204,7 @@ export function ManagerFinancialsPage() {
                 ) : (
                   <div className="text-center py-10">
                     <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <p className="mt-2 text-sm text-muted-foreground">No guest payments recorded yet.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">No guest payments recorded for this month.</p>
                   </div>
                 )}
               </CardContent>
