@@ -71,9 +71,7 @@ export function HomePage() {
           </form>
         </Form>
       </Tabs>
-      <footer className="absolute bottom-8 text-center text-muted-foreground/80">
-        <p>© 2024 Mess Connect. All rights reserved.</p>
-      </footer>
+
       <Toaster richColors />
     </div>
   );
