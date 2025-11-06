@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Utensils } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { WeeklyMenu } from "@shared/types";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation } from "@/hooks/useTranslation";
 export function WeeklyMenuPage() {
   const { t } = useTranslation();
   const [menu, setMenu] = useState<WeeklyMenu | null>(null);

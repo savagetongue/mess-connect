@@ -7,7 +7,7 @@ import { Bell, AlertCircle } from "lucide-react";
 import { api } from "@/lib/api-client";
 import type { Notification } from "@shared/types";
 import { format } from "date-fns";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation } from "@/hooks/useTranslation";
 export function NotificationsPage() {
   const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
