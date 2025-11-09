@@ -4,7 +4,7 @@
  */
  {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "mess-connect-hnvwgchs5f9s-xrajdise",
+	"name": "messconnect1",
 	"main": "worker/index.ts",
 	"compatibility_date": "2025-04-24",
 	"assets": {
