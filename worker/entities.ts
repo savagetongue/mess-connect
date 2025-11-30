@@ -1,10 +1,10 @@
 import { IndexedEntity } from "./core-utils";
-import type { User, Complaint, Suggestion, WeeklyMenu, Payment, GuestPayment, Note, Setting, Notification } from "@shared/types";
+import type { User, Complaint, Suggestion, WeeklyMenu, Payment, GuestPayment, Note, Setting, Notification, VerificationToken, ResetToken } from "@shared/types";
 // USER ENTITY
 export class UserEntity extends IndexedEntity<User> {
   static readonly entityName = "user";
   static readonly indexName = "users";
-  static readonly initialState: User = { id: "", name: "", phone: "", passwordHash: "", role: "student", status: "pending" };
+  static readonly initialState: User = { id: "", name: "", phone: "", passwordHash: "", role: "student", status: "pending", verified: false };
 }
 // COMPLAINT ENTITY
 export class ComplaintEntity extends IndexedEntity<Complaint> {
@@ -64,4 +64,16 @@ export class NotificationEntity extends IndexedEntity<Notification> {
     static readonly entityName = "notification";
     static readonly indexName = "notifications";
     static readonly initialState: Notification = { id: "", userId: "", message: "", createdAt: 0 };
+}
+// VERIFICATION TOKEN ENTITY
+export class VerificationTokenEntity extends IndexedEntity<VerificationToken> {
+    static readonly entityName = "verificationToken";
+    static readonly indexName = "verificationTokens";
+    static readonly initialState: VerificationToken = { id: "", userId: "", expiresAt: 0, used: false };
+}
+// RESET TOKEN ENTITY
+export class ResetTokenEntity extends IndexedEntity<ResetToken> {
+    static readonly entityName = "resetToken";
+    static readonly indexName = "resetTokens";
+    static readonly initialState: ResetToken = { id: "", userId: "", expiresAt: 0, used: false };
 }

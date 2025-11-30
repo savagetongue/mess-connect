@@ -65,15 +65,13 @@ const useAuthStore = create<AuthState>()(
     }
   )
 );
-// This logic was flawed. It was redirecting managers to /student because the path check was too generic.
-// The redirection logic is now handled correctly inside the login function and by ProtectedRoute.
-// We only need to handle the case where a logged-out user tries to access a protected page.
 useAuthStore.subscribe((state, prevState) => {
   if (state._hydrated && !prevState._hydrated) {
     const { token } = state;
     const path = window.location.pathname;
     const publicPaths = ['/', '/register', '/pending-approval', '/guest-payment'];
-    if (!token && !publicPaths.includes(path)) {
+    const isPublicPath = publicPaths.some(p => path.startsWith(p)) || path.startsWith('/verify/') || path.startsWith('/reset/');
+    if (!token && !isPublicPath) {
       window.location.href = '/';
     }
   }

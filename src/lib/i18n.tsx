@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { I18nContext } from '@/contexts/I18nContext';
 import type { Language } from '@/contexts/I18nContext';
 import { translations } from './i18n';
@@ -22,8 +22,9 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return translation;
   }, [language]);
+  const contextValue = useMemo(() => ({ language, setLanguage, t }), [language, t]);
   return (
-    <I18nContext.Provider value={{ language, setLanguage, t }}>
+    <I18nContext.Provider value={contextValue}>
       {children}
     </I18nContext.Provider>
   );

@@ -36,9 +36,9 @@ export function RegisterPage() {
         body: JSON.stringify(values),
       });
       toast.success('Registration successful!', {
-        description: 'Your account is pending approval. Redirecting...',
-        duration: 2000,
-        onAutoClose: () => navigate('/pending-approval'),
+        description: 'A verification link has been sent to your email. Please verify to continue.',
+        duration: 4000,
+        onAutoClose: () => navigate('/'),
       });
     } catch (error: any) {
       toast.error(error.message || 'Registration failed. Please try again.');

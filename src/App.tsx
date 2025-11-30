@@ -1,11 +1,13 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
-import { I18nProvider } from '@/lib/i18n.tsx';
+import { I18nProvider } from '@/lib/i18n';
 // Page Imports
 import { HomePage } from '@/pages/HomePage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { PendingApprovalPage } from '@/pages/PendingApprovalPage';
 import { GuestPaymentPage } from '@/pages/GuestPaymentPage';
+import { VerificationPage } from '@/pages/VerificationPage';
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 // Student Pages
 import { StudentDashboardPage } from '@/pages/student/StudentDashboardPage';
 import { WeeklyMenuPage } from '@/pages/student/WeeklyMenuPage';
@@ -29,35 +31,37 @@ import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminMenuPage } from '@/pages/admin/AdminMenuPage';
 // Layout & Auth
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+const router = createBrowserRouter([
+  // Public Routes
+  { path: "/", element: <HomePage />, errorElement: <RouteErrorBoundary /> },
+  { path: "/register", element: <RegisterPage /> },
+  { path: "/pending-approval", element: <PendingApprovalPage /> },
+  { path: "/guest-payment", element: <GuestPaymentPage /> },
+  { path: "/verify/:token", element: <VerificationPage /> },
+  { path: "/reset/:token", element: <ResetPasswordPage /> },
+  // Student Routes
+  { path: "/student/dashboard", element: <ProtectedRoute role="student"><StudentDashboardPage /></ProtectedRoute> },
+  { path: "/student/menu", element: <ProtectedRoute role="student"><WeeklyMenuPage /></ProtectedRoute> },
+  { path: "/student/dues", element: <ProtectedRoute role="student"><MyDuesPage /></ProtectedRoute> },
+  { path: "/student/complaints", element: <ProtectedRoute role="student"><ComplaintsPage /></ProtectedRoute> },
+  { path: "/student/suggestions", element: <ProtectedRoute role="student"><SuggestionsPage /></ProtectedRoute> },
+  { path: "/student/notifications", element: <ProtectedRoute role="student"><NotificationsPage /></ProtectedRoute> },
+  { path: "/student/rules", element: <ProtectedRoute role="student"><MessRulesPage /></ProtectedRoute> },
+  // Manager Routes
+  { path: "/manager/dashboard", element: <ProtectedRoute role="manager"><ManagerDashboardPage /></ProtectedRoute> },
+  { path: "/manager/students", element: <ProtectedRoute role="manager"><StudentManagementPage /></ProtectedRoute> },
+  { path: "/manager/menu", element: <ProtectedRoute role="manager"><UpdateMenuPage /></ProtectedRoute> },
+  { path: "/manager/financials", element: <ProtectedRoute role="manager"><ManagerFinancialsPage /></ProtectedRoute> },
+  { path: "/manager/feedback", element: <ProtectedRoute role="manager"><ManagerFeedbackPage /></ProtectedRoute> },
+  { path: "/manager/suggestions", element: <ProtectedRoute role="manager"><ManagerSuggestionsPage /></ProtectedRoute> },
+  { path: "/manager/notes", element: <ProtectedRoute role="manager"><ManagerNotesPage /></ProtectedRoute> },
+  { path: "/manager/broadcast", element: <ProtectedRoute role="manager"><ManagerBroadcastPage /></ProtectedRoute> },
+  { path: "/manager/settings", element: <ProtectedRoute role="manager"><ManagerSettingsPage /></ProtectedRoute> },
+  // Admin Routes
+  { path: "/admin/dashboard", element: <ProtectedRoute role="admin"><AdminDashboardPage /></ProtectedRoute> },
+  { path: "/admin/menu", element: <ProtectedRoute role="admin"><AdminMenuPage /></ProtectedRoute> },
+]);
 export function App() {
-  const router = createBrowserRouter([
-    // Public Routes
-    { path: "/", element: <HomePage />, errorElement: <RouteErrorBoundary /> },
-    { path: "/register", element: <RegisterPage /> },
-    { path: "/pending-approval", element: <PendingApprovalPage /> },
-    { path: "/guest-payment", element: <GuestPaymentPage /> },
-    // Student Routes
-    { path: "/student/dashboard", element: <ProtectedRoute role="student"><StudentDashboardPage /></ProtectedRoute> },
-    { path: "/student/menu", element: <ProtectedRoute role="student"><WeeklyMenuPage /></ProtectedRoute> },
-    { path: "/student/dues", element: <ProtectedRoute role="student"><MyDuesPage /></ProtectedRoute> },
-    { path: "/student/complaints", element: <ProtectedRoute role="student"><ComplaintsPage /></ProtectedRoute> },
-    { path: "/student/suggestions", element: <ProtectedRoute role="student"><SuggestionsPage /></ProtectedRoute> },
-    { path: "/student/notifications", element: <ProtectedRoute role="student"><NotificationsPage /></ProtectedRoute> },
-    { path: "/student/rules", element: <ProtectedRoute role="student"><MessRulesPage /></ProtectedRoute> },
-    // Manager Routes
-    { path: "/manager/dashboard", element: <ProtectedRoute role="manager"><ManagerDashboardPage /></ProtectedRoute> },
-    { path: "/manager/students", element: <ProtectedRoute role="manager"><StudentManagementPage /></ProtectedRoute> },
-    { path: "/manager/menu", element: <ProtectedRoute role="manager"><UpdateMenuPage /></ProtectedRoute> },
-    { path: "/manager/financials", element: <ProtectedRoute role="manager"><ManagerFinancialsPage /></ProtectedRoute> },
-    { path: "/manager/feedback", element: <ProtectedRoute role="manager"><ManagerFeedbackPage /></ProtectedRoute> },
-    { path: "/manager/suggestions", element: <ProtectedRoute role="manager"><ManagerSuggestionsPage /></ProtectedRoute> },
-    { path: "/manager/notes", element: <ProtectedRoute role="manager"><ManagerNotesPage /></ProtectedRoute> },
-    { path: "/manager/broadcast", element: <ProtectedRoute role="manager"><ManagerBroadcastPage /></ProtectedRoute> },
-    { path: "/manager/settings", element: <ProtectedRoute role="manager"><ManagerSettingsPage /></ProtectedRoute> },
-    // Admin Routes
-    { path: "/admin/dashboard", element: <ProtectedRoute role="admin"><AdminDashboardPage /></ProtectedRoute> },
-    { path: "/admin/menu", element: <ProtectedRoute role="admin"><AdminMenuPage /></ProtectedRoute> },
-  ]);
   return (
     <I18nProvider>
       <RouterProvider router={router} />
