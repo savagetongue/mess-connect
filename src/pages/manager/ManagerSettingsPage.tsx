@@ -94,122 +94,124 @@ export function ManagerSettingsPage() {
     }
   };
   return (
-    <AppLayout container>
-      <div className="space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-            <CardDescription>Manage application-wide settings.</CardDescription>
-          </CardHeader>
-        </Card>
-        <div className="grid md:grid-cols-2 gap-8">
+    <AppLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="py-8 md:py-10 lg:py-12 space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle>Financial Settings</CardTitle>
-              <CardDescription>Set the standard monthly fee for all students.</CardDescription>
+              <CardTitle>Settings</CardTitle>
+              <CardDescription>Manage application-wide settings.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Form {...feeForm}>
-                <form onSubmit={feeForm.handleSubmit(onFeeSubmit)} className="space-y-4">
-                  <FormField
-                    control={feeForm.control}
-                    name="monthlyFee"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Monthly Mess Fee (₹)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="e.g., 3000"
-                            {...field}
-                            onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
-                            value={field.value ?? ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={feeForm.formState.isSubmitting}>
-                    <Save className="mr-2 h-4 w-4" />
-                    {feeForm.formState.isSubmitting ? "Saving..." : "Save Fee"}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
           </Card>
-          <Card>
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Financial Settings</CardTitle>
+                <CardDescription>Set the standard monthly fee for all students.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...feeForm}>
+                  <form onSubmit={feeForm.handleSubmit(onFeeSubmit)} className="space-y-4">
+                    <FormField
+                      control={feeForm.control}
+                      name="monthlyFee"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Monthly Mess Fee (₹)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="e.g., 3000"
+                              {...field}
+                              onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" disabled={feeForm.formState.isSubmitting}>
+                      <Save className="mr-2 h-4 w-4" />
+                      {feeForm.formState.isSubmitting ? "Saving..." : "Save Fee"}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Mess Rules</CardTitle>
+                <CardDescription>Set the rules and regulations for the mess.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...rulesForm}>
+                  <form onSubmit={rulesForm.handleSubmit(onRulesSubmit)} className="space-y-4">
+                    <FormField
+                      control={rulesForm.control}
+                      name="messRules"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Rules</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Enter mess rules here. Each rule on a new line."
+                              rows={8}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" disabled={rulesForm.formState.isSubmitting}>
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      {rulesForm.formState.isSubmitting ? "Saving..." : "Save Rules"}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </div>
+          <Card className="border-destructive">
             <CardHeader>
-              <CardTitle>Mess Rules</CardTitle>
-              <CardDescription>Set the rules and regulations for the mess.</CardDescription>
+              <CardTitle>Danger Zone</CardTitle>
+              <CardDescription>These actions are irreversible. Please proceed with caution.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Form {...rulesForm}>
-                <form onSubmit={rulesForm.handleSubmit(onRulesSubmit)} className="space-y-4">
-                  <FormField
-                    control={rulesForm.control}
-                    name="messRules"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Rules</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Enter mess rules here. Each rule on a new line."
-                            rows={8}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={rulesForm.formState.isSubmitting}>
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    {rulesForm.formState.isSubmitting ? "Saving..." : "Save Rules"}
-                  </Button>
-                </form>
-              </Form>
+              <div className="flex items-center justify-between p-4 border rounded-md">
+                <div>
+                  <h3 className="font-semibold">Clear All Data</h3>
+                  <p className="text-sm text-muted-foreground">
+                    This will permanently delete all students, complaints, payments, and other data.
+                  </p>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={isClearing}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {isClearing ? "Clearing..." : "Clear Data"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete all application data, including all users, complaints, and financial records.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleClearData} className="bg-destructive hover:bg-destructive/90">
+                        Yes, delete all data
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </CardContent>
           </Card>
         </div>
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle>Danger Zone</CardTitle>
-            <CardDescription>These actions are irreversible. Please proceed with caution.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 border rounded-md">
-              <div>
-                <h3 className="font-semibold">Clear All Data</h3>
-                <p className="text-sm text-muted-foreground">
-                  This will permanently delete all students, complaints, payments, and other data.
-                </p>
-              </div>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled={isClearing}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {isClearing ? "Clearing..." : "Clear Data"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete all application data, including all users, complaints, and financial records.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearData} className="bg-destructive hover:bg-destructive/90">
-                      Yes, delete all data
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </AppLayout>
   );

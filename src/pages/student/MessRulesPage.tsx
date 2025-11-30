@@ -26,39 +26,43 @@ export function MessRulesPage() {
     fetchRules();
   }, [t]);
   return (
-    <AppLayout container>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('messRulesTitle')}</CardTitle>
-          <CardDescription>{t('messRulesDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-            </div>
-          ) : error ? (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>{t('error')}</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : (
-            <div className="prose dark:prose-invert max-w-none p-4 border rounded-md bg-muted/50 whitespace-pre-wrap">
-              {rules === t('noRulesSet') ? (
-                <div className="text-center py-10 text-muted-foreground">
-                  <BookOpen className="mx-auto h-12 w-12" />
-                  <p className="mt-4">{rules}</p>
+    <AppLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="py-8 md:py-10 lg:py-12">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('messRulesTitle')}</CardTitle>
+              <CardDescription>{t('messRulesDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
                 </div>
+              ) : error ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>{t('error')}</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               ) : (
-                <p>{rules}</p>
+                <div className="prose dark:prose-invert max-w-none p-4 border rounded-md bg-muted/50 whitespace-pre-wrap">
+                  {rules === t('noRulesSet') ? (
+                    <div className="text-center py-10 text-muted-foreground">
+                      <BookOpen className="mx-auto h-12 w-12" />
+                      <p className="mt-4">{rules}</p>
+                    </div>
+                  ) : (
+                    <p>{rules}</p>
+                  )}
+                </div>
               )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </AppLayout>
   );
 }

@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
-import { I18nProvider } from '@/lib/i18n';
+import I18nProvider from '@/lib/i18n';
 // Page Imports
 import { HomePage } from '@/pages/HomePage';
 import { RegisterPage } from '@/pages/RegisterPage';
