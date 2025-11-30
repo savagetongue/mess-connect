@@ -12,6 +12,7 @@ export interface User {
   passwordHash: string;
   role: UserRole;
   status: UserStatus;
+  verified?: boolean;
 }
 export interface Complaint {
   id: string;
@@ -72,4 +73,16 @@ export interface Notification {
     userId: string; // The student this is for
     message: string;
     createdAt: number;
+}
+export interface VerificationToken {
+    id: string; // token
+    userId: string; // email
+    expiresAt: number;
+    used: boolean;
+}
+export interface ResetToken {
+    id: string; // token
+    userId: string; // email
+    expiresAt: number;
+    used: boolean;
 }

@@ -1,8 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity, SuggestionEntity, SettingEntity, NotificationEntity } from "./entities";
+import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEntity, NoteEntity, SuggestionEntity, SettingEntity, NotificationEntity, VerificationTokenEntity, ResetTokenEntity } from "./entities";
 import { ok, bad, notFound, Index } from './core-utils';
-
 function bufferToBase64(buffer: ArrayBuffer): string {
   let binary = '';
   const bytes = new Uint8Array(buffer);
@@ -11,7 +10,6 @@ function bufferToBase64(buffer: ArrayBuffer): string {
   }
   return btoa(binary);
 }
-
 import { z } from 'zod';
 import type { User, WeeklyMenu, Complaint, Note, Payment } from "@shared/types";
 import { format } from "date-fns";
@@ -28,7 +26,12 @@ const LoginSchema = z.object({
     email: z.string().email(),
     password: z.string().min(1),
 });
-// Complaint schema is now handled by FormData parsing
+const ForgotPasswordSchema = z.object({
+    email: z.string().email("Invalid email address"),
+});
+const ResetPasswordSchema = z.object({
+    password: z.string().min(6, "Password must be at least 6 characters"),
+});
 const SuggestionSchema = z.object({
     text: z.string().min(10, "Suggestion must be at least 10 characters."),
 });
@@ -98,17 +101,16 @@ const getUser = async (c: any, next: any) => {
     await next();
 };
 export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }>) {
-
 app.use('/api/*', async (c, next) => {
     const adminEmail = 'admin@messconnect.com';
     const managerEmail = 'manager@messconnect.com';
     const adminUser = new UserEntity(c.env, adminEmail);
     const managerUser = new UserEntity(c.env, managerEmail);
     if (!await adminUser.exists()) {
-        await UserEntity.create(c.env, { id: adminEmail, name: 'Admin', phone: '0000000000', passwordHash: 'password', role: 'admin', status: 'approved' });
+        await UserEntity.create(c.env, { id: adminEmail, name: 'Admin', phone: '0000000000', passwordHash: 'password', role: 'admin', status: 'approved', verified: true });
     }
     if (!await managerUser.exists()) {
-        await UserEntity.create(c.env, { id: managerEmail, name: 'Manager', phone: '1111111111', passwordHash: 'password', role: 'manager', status: 'approved' });
+        await UserEntity.create(c.env, { id: managerEmail, name: 'Manager', phone: '1111111111', passwordHash: 'password', role: 'manager', status: 'approved', verified: true });
     }
     await next();
 });
@@ -119,7 +121,12 @@ app.post('/api/register', async (c) => {
     if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
     const { name, email, phone, password } = validation.data;
     if (await new UserEntity(c.env, email).exists()) return bad(c, 'User with this email already exists.');
-    const newUser = await UserEntity.create(c.env, { id: email, name, phone, passwordHash: password, role: 'student', status: 'pending' });
+    const newUser = await UserEntity.create(c.env, { id: email, name, phone, passwordHash: password, role: 'student', status: 'pending', verified: false });
+    // Create verification token
+    const token = crypto.randomUUID();
+    const expiresAt = Date.now() + 3600000; // 1 hour expiry
+    await VerificationTokenEntity.create(c.env, { id: token, userId: email, expiresAt, used: false });
+    console.log(`[MOCK EMAIL] Verification link for ${email}: /verify/${token}`);
     const { passwordHash, ...userResponse } = newUser;
     return ok(c, userResponse);
 });
@@ -132,9 +139,54 @@ app.post('/api/login', async (c) => {
     if (!await userEntity.exists()) return notFound(c, 'User not found.');
     const user = await userEntity.getState();
     if (user.passwordHash !== password) return bad(c, 'Invalid credentials.');
+    if (user.role === 'student' && !user.verified) {
+        return bad(c, 'Please verify your email before logging in.');
+    }
     if (user.role === 'student' && user.status !== 'approved') return c.json({ success: true, data: { status: user.status } }, 200);
     const { passwordHash, ...userResponse } = user;
     return ok(c, { ...userResponse, token: `fake-token-for-${user.id}` });
+});
+app.get('/api/verify-email/:token', async (c) => {
+    const token = c.req.param('token');
+    const tokenEntity = new VerificationTokenEntity(c.env, token);
+    if (!await tokenEntity.exists()) return notFound(c, 'Invalid verification token.');
+    const tokenData = await tokenEntity.getState();
+    if (tokenData.used) return bad(c, 'This verification link has already been used.');
+    if (Date.now() > tokenData.expiresAt) return bad(c, 'This verification link has expired.');
+    const userEntity = new UserEntity(c.env, tokenData.userId);
+    if (!await userEntity.exists()) return notFound(c, 'User associated with this token not found.');
+    await userEntity.patch({ verified: true });
+    await tokenEntity.patch({ used: true });
+    return ok(c, { message: 'Email verified successfully.' });
+});
+app.post('/api/forgot-password', async (c) => {
+    const body = await c.req.json();
+    const validation = ForgotPasswordSchema.safeParse(body);
+    if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+    const { email } = validation.data;
+    const userEntity = new UserEntity(c.env, email);
+    if (!await userEntity.exists()) return notFound(c, 'User with this email does not exist.');
+    const token = crypto.randomUUID();
+    const expiresAt = Date.now() + 3600000; // 1 hour expiry
+    await ResetTokenEntity.create(c.env, { id: token, userId: email, expiresAt, used: false });
+    console.log(`[MOCK EMAIL] Password reset link for ${email}: /reset/${token}`);
+    return ok(c, { message: 'If an account with this email exists, a password reset link has been sent.' });
+});
+app.post('/api/reset-password/:token', async (c) => {
+    const token = c.req.param('token');
+    const body = await c.req.json();
+    const validation = ResetPasswordSchema.safeParse(body);
+    if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
+    const tokenEntity = new ResetTokenEntity(c.env, token);
+    if (!await tokenEntity.exists()) return notFound(c, 'Invalid reset token.');
+    const tokenData = await tokenEntity.getState();
+    if (tokenData.used) return bad(c, 'This reset link has already been used.');
+    if (Date.now() > tokenData.expiresAt) return bad(c, 'This reset link has expired.');
+    const userEntity = new UserEntity(c.env, tokenData.userId);
+    if (!await userEntity.exists()) return notFound(c, 'User associated with this token not found.');
+    await userEntity.patch({ passwordHash: validation.data.password });
+    await tokenEntity.patch({ used: true });
+    return ok(c, { message: 'Password has been reset successfully.' });
 });
 // PROTECTED ROUTES
 app.use('/api/*', getUser);
@@ -491,7 +543,7 @@ app.delete('/api/notes/:id', async (c) => {
 app.post('/api/settings/clear-all-data', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
-    const entityClasses = [UserEntity, ComplaintEntity, SuggestionEntity, MenuEntity, PaymentEntity, GuestPaymentEntity, NoteEntity, SettingEntity, NotificationEntity];
+    const entityClasses = [UserEntity, ComplaintEntity, SuggestionEntity, MenuEntity, PaymentEntity, GuestPaymentEntity, NoteEntity, SettingEntity, NotificationEntity, VerificationTokenEntity, ResetTokenEntity];
     for (const EntityClass of entityClasses) {
         const index = new Index(c.env, EntityClass.indexName);
         const { items: ids } = await index.page(undefined, 1000); // Get all items
@@ -511,7 +563,6 @@ app.get('/api/settings/fee', async (c) => {
     const settings = await settingEntity.getState();
     return ok(c, { monthlyFee: settings.monthlyFee });
 });
-
 app.post('/api/settings/fee', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
