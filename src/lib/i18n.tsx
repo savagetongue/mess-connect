@@ -29,3 +29,4 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </I18nContext.Provider>
   );
 };
+export default I18nProvider;
