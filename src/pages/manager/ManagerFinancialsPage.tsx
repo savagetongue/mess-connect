@@ -89,7 +89,7 @@ export function ManagerFinancialsPage() {
     setSelectedDate(currentDate => direction === 'prev' ? subMonths(currentDate, 1) : addMonths(currentDate, 1));
   };
   return (
-    <AppLayout container>
+    <AppLayout>
       <div className="space-y-8">
         <Card>
           <CardHeader>

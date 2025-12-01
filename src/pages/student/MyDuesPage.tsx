@@ -91,7 +91,7 @@ export function MyDuesPage() {
   const currentMonthStr = format(new Date(), "yyyy-MM");
   const isCurrentMonthPaid = payments.some(p => p.month === currentMonthStr && p.status === 'paid');
   return (
-    <AppLayout container>
+    <AppLayout>
       <Card>
         <CardHeader>
           <CardTitle>{t('myDuesTitle')}</CardTitle>

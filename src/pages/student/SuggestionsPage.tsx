@@ -60,7 +60,7 @@ export function SuggestionsPage() {
     }
   };
   return (
-    <AppLayout container>
+    <AppLayout>
       <div className="grid gap-8 md:grid-cols-2">
         <Card>
           <CardHeader>
