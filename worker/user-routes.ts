@@ -55,7 +55,6 @@ async function sendEmail(env: Env, to: string, subject: string, html: string) {
         console.error("RESEND_API_KEY environment variable not set or empty. Skipping email send.");
         return { success: false, error: "email_not_configured" };
     }
-
     // Helpers for masking/redacting logs to avoid leaking secrets or very long responses
     const maskKey = (s: string) => {
         if (!s) return '';
@@ -73,12 +72,9 @@ async function sendEmail(env: Env, to: string, subject: string, html: string) {
             return '[unserializable]';
         }
     };
-
     const fromAddress = `Mess Connect <no-reply@${WORKER_DOMAIN || 'messconnect.app'}>`;
     const apiUrl = 'https://api.resend.com/emails';
-
     console.info(`sendEmail: key_present=true masked_key=${maskKey(key)} to=${to} from=${fromAddress} subject="${subject}"`);
-
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -93,7 +89,6 @@ async function sendEmail(env: Env, to: string, subject: string, html: string) {
                 html,
             }),
         });
-
         const contentType = response.headers.get('content-type') || '';
         let responseBody = '';
         if (contentType.includes('application/json')) {
@@ -107,12 +102,10 @@ async function sendEmail(env: Env, to: string, subject: string, html: string) {
         } else {
             responseBody = await response.text().catch(() => '<non-text-response>');
         }
-
         if (!response.ok) {
             console.error(`Failed to send email via Resend: status=${response.status} ${response.statusText} body=${redact(responseBody)}`);
             return { success: false, error: "email_send_failed" };
         }
-
         console.info(`Email sent successfully to ${to} via Resend. status=${response.status}`);
         return { success: true };
     } catch (error) {
@@ -698,5 +691,76 @@ app.post('/api/payments/mark-as-paid', async (c) => {
         createdAt: Date.now(),
     });
     return ok(c, payment);
+});
+// TEMPORARY CLEANUP ENDPOINT - TO BE REMOVED AFTER ONE-TIME USE
+app.post('/api/manager/cleanup-test-accounts', async (c) => {
+    const user = c.get('user');
+    if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+    try {
+        console.log("Starting test account cleanup...");
+        const allUsers = (await UserEntity.list(c.env)).items;
+        const allPayments = (await PaymentEntity.list(c.env)).items;
+        const allComplaints = (await ComplaintEntity.list(c.env)).items;
+        const allSuggestions = (await SuggestionEntity.list(c.env)).items;
+        const allNotifications = (await NotificationEntity.list(c.env)).items;
+        const testUserEmails = [
+            'anandbhagyawant8719@gmail.com',
+            '0209',
+            'gpt'
+        ];
+        const usersToDelete = allUsers.filter(u =>
+            testUserEmails.some(pattern => u.id.toLowerCase().includes(pattern))
+        );
+        if (usersToDelete.length === 0) {
+            console.log("No test accounts found to clean up.");
+            return ok(c, { message: "No test accounts found to clean up.", deleted: { users: 0, totalRecords: 0 } });
+        }
+        let totalRecordsDeleted = 0;
+        for (const userToDelete of usersToDelete) {
+            const userId = userToDelete.id;
+            console.log(`Cleaning up data for user: ${userId}`);
+            // Cascade delete associated data
+            const paymentsToDelete = allPayments.filter(p => p.userId === userId).map(p => p.id);
+            if (paymentsToDelete.length > 0) {
+                const count = await PaymentEntity.deleteMany(c.env, paymentsToDelete);
+                console.log(`Deleted ${count} payments for ${userId}`);
+                totalRecordsDeleted += count;
+            }
+            const complaintsToDelete = allComplaints.filter(p => p.studentId === userId).map(p => p.id);
+            if (complaintsToDelete.length > 0) {
+                const count = await ComplaintEntity.deleteMany(c.env, complaintsToDelete);
+                console.log(`Deleted ${count} complaints for ${userId}`);
+                totalRecordsDeleted += count;
+            }
+            const suggestionsToDelete = allSuggestions.filter(p => p.studentId === userId).map(p => p.id);
+            if (suggestionsToDelete.length > 0) {
+                const count = await SuggestionEntity.deleteMany(c.env, suggestionsToDelete);
+                console.log(`Deleted ${count} suggestions for ${userId}`);
+                totalRecordsDeleted += count;
+            }
+            const notificationsToDelete = allNotifications.filter(p => p.userId === userId).map(p => p.id);
+            if (notificationsToDelete.length > 0) {
+                const count = await NotificationEntity.deleteMany(c.env, notificationsToDelete);
+                console.log(`Deleted ${count} notifications for ${userId}`);
+                totalRecordsDeleted += count;
+            }
+        }
+        // Finally, delete the users themselves
+        const userIdsToDelete = usersToDelete.map(u => u.id);
+        const userDeleteCount = await UserEntity.deleteMany(c.env, userIdsToDelete);
+        console.log(`Deleted ${userDeleteCount} user accounts.`);
+        totalRecordsDeleted += userDeleteCount;
+        console.log("Test account cleanup finished.");
+        return ok(c, {
+            message: "Test account cleanup successful.",
+            deleted: {
+                users: userDeleteCount,
+                totalRecords: totalRecordsDeleted,
+            }
+        });
+    } catch (error) {
+        console.error("Error during test account cleanup:", error);
+        return bad(c, "An error occurred during cleanup.");
+    }
 });
 }
