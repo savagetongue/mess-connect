@@ -66,7 +66,7 @@ export function ManagerNotesPage() {
     }
   };
   return (
-    <AppLayout container>
+    <AppLayout>
       <Card>
         <CardHeader>
           <CardTitle>Notes & To-Do</CardTitle>

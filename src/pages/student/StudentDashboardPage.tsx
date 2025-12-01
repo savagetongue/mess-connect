@@ -35,7 +35,7 @@ export function StudentDashboardPage() {
     },
   ];
   return (
-    <AppLayout container>
+    <AppLayout>
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold">{t('welcomeUser', { name: user?.name || '' })}</h1>

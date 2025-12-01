@@ -85,7 +85,7 @@ export function StudentManagementPage() {
   const pendingStudents = filteredStudents.filter(s => s.status === 'pending');
   const activeStudents = filteredStudents.filter(s => s.status === 'approved' || s.status === 'rejected');
   return (
-    <AppLayout container>
+    <AppLayout>
       <div className="space-y-8">
         {error && (
           <Alert variant="destructive">

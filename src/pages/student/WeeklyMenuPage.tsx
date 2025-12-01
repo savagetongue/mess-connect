@@ -28,7 +28,7 @@ export function WeeklyMenuPage() {
     fetchMenu();
   }, [t]);
   return (
-    <AppLayout container>
+    <AppLayout>
       <Card>
         <CardHeader>
           <CardTitle>{t('weeklyMenuTitle')}</CardTitle>

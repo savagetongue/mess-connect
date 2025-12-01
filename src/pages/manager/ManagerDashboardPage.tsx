@@ -46,7 +46,7 @@ export function ManagerDashboardPage() {
     },
   ];
   return (
-    <AppLayout container>
+    <AppLayout>
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold">Manager Dashboard</h1>

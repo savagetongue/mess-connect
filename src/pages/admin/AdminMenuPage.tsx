@@ -26,7 +26,7 @@ export function AdminMenuPage() {
     fetchMenu();
   }, []);
   return (
-    <AppLayout container>
+    <AppLayout>
       <Card>
         <CardHeader>
           <CardTitle>View Weekly Menu</CardTitle>

@@ -49,7 +49,7 @@ export function AdminDashboardPage() {
       );
   }, [complaints, searchTerm, statusFilter]);
   return (
-    <AppLayout container>
+    <AppLayout>
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

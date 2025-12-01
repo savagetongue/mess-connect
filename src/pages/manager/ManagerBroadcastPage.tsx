@@ -38,7 +38,7 @@ export function ManagerBroadcastPage() {
     }
   };
   return (
-    <AppLayout container>
+    <AppLayout>
       <Card>
         <CardHeader>
           <CardTitle>Broadcast Message</CardTitle>
