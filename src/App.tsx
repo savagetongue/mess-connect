@@ -1,6 +1,7 @@
 import React from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, useLocation } from "react-router-dom";
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import I18nProvider from '@/lib/i18n.tsx';
 import { motion, AnimatePresence } from 'framer-motion';
 // Page Imports
@@ -73,20 +74,28 @@ const router = createBrowserRouter([
   createProtectedRoute("/admin/dashboard", "admin", <AdminDashboardPage />),
   createProtectedRoute("/admin/menu", "admin", <AdminMenuPage />),
 ]);
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <RouterProvider router={router} />
+      </motion.div>
+    </AnimatePresence>
+  );
+};
 export function App() {
   return (
     <I18nProvider>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={location.pathname}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <RouterProvider router={router} />
-        </motion.div>
-      </AnimatePresence>
+      <ErrorBoundary fallback={<RouteErrorBoundary />}>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
     </I18nProvider>
   );
 }

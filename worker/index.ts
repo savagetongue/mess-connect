@@ -24,10 +24,7 @@ export interface ClientErrorReport {
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 app.use('*', logger());
 app.use('/api/*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization'] }));
-// The `as any` cast here is a targeted fix to resolve a complex Hono/TypeScript generic inference issue (TS2345)
-// that arises from how variables are set in middleware vs. how they are consumed in routes.
-// This maintains runtime correctness while ensuring the build passes without type errors.
-userRoutes(app as any);
+userRoutes(app);
 app.get('/api/health', (c) => c.json({ success: true, data: { status: 'healthy', timestamp: new Date().toISOString() }}));
 app.post('/api/client-errors', async (c) => {
   try {
