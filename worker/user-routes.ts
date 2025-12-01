@@ -49,35 +49,35 @@ const CreateOrderSchema = z.object({ amount: z.number().positive(), name: z.stri
 const VerifyPaymentSchema = z.object({ razorpay_order_id: z.string(), razorpay_payment_id: z.string(), razorpay_signature: z.string(), amount: z.number(), name: z.string().optional(), phone: z.string().optional(), studentId: z.string().optional(), });
 // Email Sending Helper
 async function sendEmail(env: Env, to: string, subject: string, html: string) {
-    const { CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, WORKER_DOMAIN } = env;
-    if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID || !WORKER_DOMAIN) {
-        console.error("Email environment variables not set. Skipping email send.");
+    const { RESEND_API_KEY, WORKER_DOMAIN } = env;
+    if (!RESEND_API_KEY) {
+        console.error("RESEND_API_KEY environment variable not set. Skipping email send.");
         return { success: false, error: "email_not_configured" };
     }
-    const fromAddress = `no-reply@${WORKER_DOMAIN}`;
-    const apiUrl = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/email/send`;
+    const fromAddress = `Mess Connect <no-reply@${WORKER_DOMAIN || 'messconnect.app'}>`;
+    const apiUrl = 'https://api.resend.com/emails';
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+                'Authorization': `Bearer ${RESEND_API_KEY}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                to: [{ email: to }],
-                from: { email: fromAddress, name: "Mess Connect" },
+                from: fromAddress,
+                to: [to],
                 subject: subject,
-                content: [{ type: 'text/html', value: html }],
+                html: html,
             }),
         });
         if (!response.ok) {
             const errorBody = await response.json();
-            console.error('Failed to send email:', JSON.stringify(errorBody));
+            console.error('Failed to send email via Resend:', JSON.stringify(errorBody));
             return { success: false, error: "email_send_failed" };
         }
         return { success: true };
     } catch (error) {
-        console.error('Error sending email:', error);
+        console.error('Error sending email via Resend:', error);
         return { success: false, error: "email_exception" };
     }
 }
@@ -136,6 +136,9 @@ app.post('/api/register', async (c) => {
         verificationLink
     );
     const emailResult = await sendEmail(c.env, email, "Mess Connect - Verify Your Email", emailHtml);
+    if (!emailResult.success) {
+        console.log(`Manual verification link for ${email}: ${verificationLink}`);
+    }
     const { passwordHash, ...userResponse } = newUser;
     const responseData = { ...userResponse, note: emailResult.success ? undefined : emailResult.error };
     return ok(c, responseData);
@@ -189,7 +192,10 @@ app.post('/api/forgot-password', async (c) => {
         "Reset Password",
         resetLink
     );
-    await sendEmail(c.env, email, "Mess Connect - Password Reset Request", emailHtml);
+    const emailResult = await sendEmail(c.env, email, "Mess Connect - Password Reset Request", emailHtml);
+    if (!emailResult.success) {
+        console.log(`Manual reset link for ${email}: ${resetLink}`);
+    }
     return ok(c, { message: 'If an account with this email exists, a password reset link has been sent.' });
 });
 app.post('/api/reset-password/:token', async (c) => {
