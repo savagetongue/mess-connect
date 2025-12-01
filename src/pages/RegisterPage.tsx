@@ -31,15 +31,22 @@ export function RegisterPage() {
   const onSubmit = async (values: RegisterFormValues) => {
     setIsLoading(true);
     try {
-      await api('/api/register', {
+      const response = await api<{ note?: string }>('/api/register', {
         method: 'POST',
         body: JSON.stringify(values),
       });
-      toast.success('Registration successful!', {
-        description: 'A verification link has been sent to your email. Please verify to continue.',
-        duration: 4000,
-        onAutoClose: () => navigate('/'),
-      });
+      if (response.note === 'email_send_failed' || response.note === 'email_not_configured') {
+        toast.warning('Account created, but verification email failed to send.', {
+          description: 'Please contact the manager for manual approval.',
+          duration: 5000,
+        });
+      } else {
+        toast.success('Verification email sent!', {
+          description: 'Please check your inbox to verify your email.',
+          duration: 5000,
+        });
+      }
+      setTimeout(() => navigate('/'), 5000);
     } catch (error: any) {
       toast.error(error.message || 'Registration failed. Please try again.');
       setIsLoading(false);

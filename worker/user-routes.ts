@@ -16,6 +16,7 @@ import { format } from "date-fns";
 export type HonoVariables = {
     user?: User;
 };
+// Schemas
 const RegisterSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
@@ -32,63 +33,64 @@ const ForgotPasswordSchema = z.object({
 const ResetPasswordSchema = z.object({
     password: z.string().min(6, "Password must be at least 6 characters"),
 });
-const SuggestionSchema = z.object({
-    text: z.string().min(10, "Suggestion must be at least 10 characters."),
-});
-const ReplySchema = z.object({
-    reply: z.string().min(1, "Reply cannot be empty."),
-});
-const GuestPaymentSchema = z.object({
-    name: z.string().min(2),
-    phone: z.string().min(10),
-    amount: z.number().positive(),
-});
-const MenuSchema = z.object({
-    id: z.literal('singleton'),
-    days: z.array(z.object({
-        day: z.string(),
-        breakfast: z.string(),
-        lunch: z.string(),
-        dinner: z.string(),
-    })).length(7),
-});
-const NoteSchema = z.object({
-    text: z.string().min(1, "Note cannot be empty."),
-});
-const UpdateNoteSchema = z.object({
-    completed: z.boolean(),
-});
-const BroadcastSchema = z.object({
-    message: z.string().min(10, "Message must be at least 10 characters."),
-});
-const NotificationSchema = z.object({
-    message: z.string().min(10, "Message must be at least 10 characters."),
-});
-const MarkAsPaidSchema = z.object({
-    studentId: z.string(),
-    amount: z.number().positive(),
-});
-const FeeSchema = z.object({
-    monthlyFee: z.number().positive("Fee must be a positive number."),
-});
-const RulesSchema = z.object({
-    messRules: z.string().min(10, "Rules must be at least 10 characters."),
-});
-const CreateOrderSchema = z.object({
-    amount: z.number().positive(),
-    name: z.string().optional(), // For guest
-    phone: z.string().optional(), // For guest
-    studentId: z.string().optional(), // For student
-});
-const VerifyPaymentSchema = z.object({
-    razorpay_order_id: z.string(),
-    razorpay_payment_id: z.string(),
-    razorpay_signature: z.string(),
-    amount: z.number(),
-    name: z.string().optional(),
-    phone: z.string().optional(),
-    studentId: z.string().optional(),
-});
+// Other schemas remain the same...
+const SuggestionSchema = z.object({ text: z.string().min(10, "Suggestion must be at least 10 characters."), });
+const ReplySchema = z.object({ reply: z.string().min(1, "Reply cannot be empty."), });
+const GuestPaymentSchema = z.object({ name: z.string().min(2), phone: z.string().min(10), amount: z.number().positive(), });
+const MenuSchema = z.object({ id: z.literal('singleton'), days: z.array(z.object({ day: z.string(), breakfast: z.string(), lunch: z.string(), dinner: z.string(), })).length(7), });
+const NoteSchema = z.object({ text: z.string().min(1, "Note cannot be empty."), });
+const UpdateNoteSchema = z.object({ completed: z.boolean(), });
+const BroadcastSchema = z.object({ message: z.string().min(10, "Message must be at least 10 characters."), });
+const NotificationSchema = z.object({ message: z.string().min(10, "Message must be at least 10 characters."), });
+const MarkAsPaidSchema = z.object({ studentId: z.string(), amount: z.number().positive(), });
+const FeeSchema = z.object({ monthlyFee: z.number().positive("Fee must be a positive number."), });
+const RulesSchema = z.object({ messRules: z.string().min(10, "Rules must be at least 10 characters."), });
+const CreateOrderSchema = z.object({ amount: z.number().positive(), name: z.string().optional(), phone: z.string().optional(), studentId: z.string().optional(), });
+const VerifyPaymentSchema = z.object({ razorpay_order_id: z.string(), razorpay_payment_id: z.string(), razorpay_signature: z.string(), amount: z.number(), name: z.string().optional(), phone: z.string().optional(), studentId: z.string().optional(), });
+// Email Sending Helper
+async function sendEmail(env: Env, to: string, subject: string, html: string) {
+    const { CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, WORKER_DOMAIN } = env;
+    if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID || !WORKER_DOMAIN) {
+        console.error("Email environment variables not set. Skipping email send.");
+        return { success: false, error: "email_not_configured" };
+    }
+    const fromAddress = `no-reply@${WORKER_DOMAIN}`;
+    const apiUrl = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/email/send`;
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                to: [{ email: to }],
+                from: { email: fromAddress, name: "Mess Connect" },
+                subject: subject,
+                content: [{ type: 'text/html', value: html }],
+            }),
+        });
+        if (!response.ok) {
+            const errorBody = await response.json();
+            console.error('Failed to send email:', JSON.stringify(errorBody));
+            return { success: false, error: "email_send_failed" };
+        }
+        return { success: true };
+    } catch (error) {
+        console.error('Error sending email:', error);
+        return { success: false, error: "email_exception" };
+    }
+}
+const getEmailTemplate = (title: string, body: string, buttonText: string, link: string) => `
+  <!DOCTYPE html><html><body style="font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f4;">
+    <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <img src="https://via.placeholder.com/150x50?text=Mess+Connect" alt="Mess Connect Logo" style="margin-bottom: 20px;">
+      <h1 style="color: #333;">${title}</h1>
+      <p style="color: #555; line-height: 1.6;">${body}</p>
+      <a href="${link}" style="display: inline-block; background-color: #F97316; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-top: 20px;">${buttonText}</a>
+    </div>
+  </body></html>`;
+// Auth Middleware
 const getUser = async (c: any, next: any) => {
     const authHeader = c.req.header('Authorization');
     if (authHeader && authHeader.startsWith('Bearer fake-token-for-')) {
@@ -122,13 +124,21 @@ app.post('/api/register', async (c) => {
     const { name, email, phone, password } = validation.data;
     if (await new UserEntity(c.env, email).exists()) return bad(c, 'User with this email already exists.');
     const newUser = await UserEntity.create(c.env, { id: email, name, phone, passwordHash: password, role: 'student', status: 'pending', verified: false });
-    // Create verification token
     const token = crypto.randomUUID();
     const expiresAt = Date.now() + 3600000; // 1 hour expiry
     await VerificationTokenEntity.create(c.env, { id: token, userId: email, expiresAt, used: false });
-    console.log(`[MOCK EMAIL] Verification link for ${email}: /verify/${token}`);
+    const appUrl = c.env.APP_URL || `https://${c.env.WORKER_DOMAIN}`;
+    const verificationLink = `${appUrl}/verify/${token}`;
+    const emailHtml = getEmailTemplate(
+        "Verify Your Email Address",
+        "Thanks for signing up for Mess Connect! Please click the button below to verify your email address.",
+        "Verify Email",
+        verificationLink
+    );
+    const emailResult = await sendEmail(c.env, email, "Mess Connect - Verify Your Email", emailHtml);
     const { passwordHash, ...userResponse } = newUser;
-    return ok(c, userResponse);
+    const responseData = { ...userResponse, note: emailResult.success ? undefined : emailResult.error };
+    return ok(c, responseData);
 });
 app.post('/api/login', async (c) => {
     const body = await c.req.json();
@@ -165,11 +175,21 @@ app.post('/api/forgot-password', async (c) => {
     if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
     const { email } = validation.data;
     const userEntity = new UserEntity(c.env, email);
-    if (!await userEntity.exists()) return notFound(c, 'User with this email does not exist.');
+    if (!await userEntity.exists()) {
+        return ok(c, { message: 'If an account with this email exists, a password reset link has been sent.' });
+    }
     const token = crypto.randomUUID();
     const expiresAt = Date.now() + 3600000; // 1 hour expiry
     await ResetTokenEntity.create(c.env, { id: token, userId: email, expiresAt, used: false });
-    console.log(`[MOCK EMAIL] Password reset link for ${email}: /reset/${token}`);
+    const appUrl = c.env.APP_URL || `https://${c.env.WORKER_DOMAIN}`;
+    const resetLink = `${appUrl}/reset/${token}`;
+    const emailHtml = getEmailTemplate(
+        "Reset Your Password",
+        "You requested a password reset for your Mess Connect account. Click the button below to set a new password.",
+        "Reset Password",
+        resetLink
+    );
+    await sendEmail(c.env, email, "Mess Connect - Password Reset Request", emailHtml);
     return ok(c, { message: 'If an account with this email exists, a password reset link has been sent.' });
 });
 app.post('/api/reset-password/:token', async (c) => {
@@ -188,8 +208,9 @@ app.post('/api/reset-password/:token', async (c) => {
     await tokenEntity.patch({ used: true });
     return ok(c, { message: 'Password has been reset successfully.' });
 });
-// PROTECTED ROUTES
+// PROTECTED ROUTES & OTHER ROUTES...
 app.use('/api/*', getUser);
+// ... (The rest of the routes remain unchanged)
 app.get('/api/menu', async (c) => {
     const menuEntity = new MenuEntity(c.env, 'singleton');
     if (!await menuEntity.exists()) await menuEntity.save(MenuEntity.initialState);
