@@ -9,6 +9,10 @@ export interface Env {
   GlobalDurableObject: DurableObjectNamespace<GlobalDurableObject>;
   RAZORPAY_KEY_ID?: string;
   RAZORPAY_KEY_SECRET?: string;
+  CLOUDFLARE_API_TOKEN?: string;
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  WORKER_DOMAIN?: string;
+  APP_URL?: string;
 }
 type Doc<T> = { v: number; data: T };
 /**
