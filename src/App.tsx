@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import I18nProvider from '@/lib/i18n.tsx';
+import { motion } from 'framer-motion';
 // Page Imports
 import { HomePage } from '@/pages/HomePage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -64,7 +65,9 @@ const router = createBrowserRouter([
 export function App() {
   return (
     <I18nProvider>
-      <RouterProvider router={router} />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+        <RouterProvider router={router} />
+      </motion.div>
     </I18nProvider>
   );
 }
