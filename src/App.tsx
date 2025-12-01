@@ -2,7 +2,7 @@ import React from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import I18nProvider from '@/lib/i18n.tsx';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 // Page Imports
 import { HomePage } from '@/pages/HomePage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -33,42 +33,60 @@ import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminMenuPage } from '@/pages/admin/AdminMenuPage';
 // Layout & Auth
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+const createRoute = (path: string, element: JSX.Element) => ({
+  path,
+  element,
+  errorElement: <RouteErrorBoundary />,
+});
+const createProtectedRoute = (path: string, role: 'student' | 'manager' | 'admin', element: JSX.Element) => ({
+  path,
+  element: <ProtectedRoute role={role}>{element}</ProtectedRoute>,
+  errorElement: <RouteErrorBoundary />,
+});
 const router = createBrowserRouter([
   // Public Routes
-  { path: "/", element: <HomePage />, errorElement: <RouteErrorBoundary /> },
-  { path: "/register", element: <RegisterPage /> },
-  { path: "/pending-approval", element: <PendingApprovalPage /> },
-  { path: "/guest-payment", element: <GuestPaymentPage /> },
-  { path: "/verify/:token", element: <VerificationPage /> },
-  { path: "/reset/:token", element: <ResetPasswordPage /> },
+  createRoute("/", <HomePage />),
+  createRoute("/register", <RegisterPage />),
+  createRoute("/pending-approval", <PendingApprovalPage />),
+  createRoute("/guest-payment", <GuestPaymentPage />),
+  createRoute("/verify/:token", <VerificationPage />),
+  createRoute("/reset/:token", <ResetPasswordPage />),
   // Student Routes
-  { path: "/student/dashboard", element: <ProtectedRoute role="student"><StudentDashboardPage /></ProtectedRoute> },
-  { path: "/student/menu", element: <ProtectedRoute role="student"><WeeklyMenuPage /></ProtectedRoute> },
-  { path: "/student/dues", element: <ProtectedRoute role="student"><MyDuesPage /></ProtectedRoute> },
-  { path: "/student/complaints", element: <ProtectedRoute role="student"><ComplaintsPage /></ProtectedRoute> },
-  { path: "/student/suggestions", element: <ProtectedRoute role="student"><SuggestionsPage /></ProtectedRoute> },
-  { path: "/student/notifications", element: <ProtectedRoute role="student"><NotificationsPage /></ProtectedRoute> },
-  { path: "/student/rules", element: <ProtectedRoute role="student"><MessRulesPage /></ProtectedRoute> },
+  createProtectedRoute("/student/dashboard", "student", <StudentDashboardPage />),
+  createProtectedRoute("/student/menu", "student", <WeeklyMenuPage />),
+  createProtectedRoute("/student/dues", "student", <MyDuesPage />),
+  createProtectedRoute("/student/complaints", "student", <ComplaintsPage />),
+  createProtectedRoute("/student/suggestions", "student", <SuggestionsPage />),
+  createProtectedRoute("/student/notifications", "student", <NotificationsPage />),
+  createProtectedRoute("/student/rules", "student", <MessRulesPage />),
   // Manager Routes
-  { path: "/manager/dashboard", element: <ProtectedRoute role="manager"><ManagerDashboardPage /></ProtectedRoute> },
-  { path: "/manager/students", element: <ProtectedRoute role="manager"><StudentManagementPage /></ProtectedRoute> },
-  { path: "/manager/menu", element: <ProtectedRoute role="manager"><UpdateMenuPage /></ProtectedRoute> },
-  { path: "/manager/financials", element: <ProtectedRoute role="manager"><ManagerFinancialsPage /></ProtectedRoute> },
-  { path: "/manager/feedback", element: <ProtectedRoute role="manager"><ManagerFeedbackPage /></ProtectedRoute> },
-  { path: "/manager/suggestions", element: <ProtectedRoute role="manager"><ManagerSuggestionsPage /></ProtectedRoute> },
-  { path: "/manager/notes", element: <ProtectedRoute role="manager"><ManagerNotesPage /></ProtectedRoute> },
-  { path: "/manager/broadcast", element: <ProtectedRoute role="manager"><ManagerBroadcastPage /></ProtectedRoute> },
-  { path: "/manager/settings", element: <ProtectedRoute role="manager"><ManagerSettingsPage /></ProtectedRoute> },
+  createProtectedRoute("/manager/dashboard", "manager", <ManagerDashboardPage />),
+  createProtectedRoute("/manager/students", "manager", <StudentManagementPage />),
+  createProtectedRoute("/manager/menu", "manager", <UpdateMenuPage />),
+  createProtectedRoute("/manager/financials", "manager", <ManagerFinancialsPage />),
+  createProtectedRoute("/manager/feedback", "manager", <ManagerFeedbackPage />),
+  createProtectedRoute("/manager/suggestions", "manager", <ManagerSuggestionsPage />),
+  createProtectedRoute("/manager/notes", "manager", <ManagerNotesPage />),
+  createProtectedRoute("/manager/broadcast", "manager", <ManagerBroadcastPage />),
+  createProtectedRoute("/manager/settings", "manager", <ManagerSettingsPage />),
   // Admin Routes
-  { path: "/admin/dashboard", element: <ProtectedRoute role="admin"><AdminDashboardPage /></ProtectedRoute> },
-  { path: "/admin/menu", element: <ProtectedRoute role="admin"><AdminMenuPage /></ProtectedRoute> },
+  createProtectedRoute("/admin/dashboard", "admin", <AdminDashboardPage />),
+  createProtectedRoute("/admin/menu", "admin", <AdminMenuPage />),
 ]);
 export function App() {
   return (
     <I18nProvider>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-        <RouterProvider router={router} />
-      </motion.div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <RouterProvider router={router} />
+        </motion.div>
+      </AnimatePresence>
     </I18nProvider>
   );
 }
