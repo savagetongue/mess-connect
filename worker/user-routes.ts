@@ -50,34 +50,75 @@ const VerifyPaymentSchema = z.object({ razorpay_order_id: z.string(), razorpay_p
 // Email Sending Helper
 async function sendEmail(env: Env, to: string, subject: string, html: string) {
     const { RESEND_API_KEY, WORKER_DOMAIN } = env;
-    if (!RESEND_API_KEY) {
-        console.error("RESEND_API_KEY environment variable not set. Skipping email send.");
+    const key = typeof RESEND_API_KEY === 'string' ? RESEND_API_KEY.trim() : '';
+    if (!key) {
+        console.error("RESEND_API_KEY environment variable not set or empty. Skipping email send.");
         return { success: false, error: "email_not_configured" };
     }
+
+    // Helpers for masking/redacting logs to avoid leaking secrets or very long responses
+    const maskKey = (s: string) => {
+        if (!s) return '';
+        if (s.length <= 8) return '****';
+        return `${s.slice(0, 4)}...${s.slice(-4)}`;
+    };
+    const redact = (input: any) => {
+        try {
+            if (input == null) return '';
+            const str = typeof input === 'string' ? input : JSON.stringify(input);
+            const trimmed = str.trim();
+            if (trimmed.length > 500) return `${trimmed.slice(0, 500)}...[truncated]`;
+            return trimmed;
+        } catch (e) {
+            return '[unserializable]';
+        }
+    };
+
     const fromAddress = `Mess Connect <no-reply@${WORKER_DOMAIN || 'messconnect.app'}>`;
     const apiUrl = 'https://api.resend.com/emails';
+
+    console.info(`sendEmail: key_present=true masked_key=${maskKey(key)} to=${to} from=${fromAddress} subject="${subject}"`);
+
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${RESEND_API_KEY}`,
+                'Authorization': `Bearer ${key}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 from: fromAddress,
                 to: [to],
-                subject: subject,
-                html: html,
+                subject,
+                html,
             }),
         });
+
+        const contentType = response.headers.get('content-type') || '';
+        let responseBody = '';
+        if (contentType.includes('application/json')) {
+            try {
+                const json = await response.json();
+                responseBody = JSON.stringify(json);
+            } catch (e) {
+                // Fallback to text if JSON parsing fails
+                responseBody = await response.text().catch(() => '<unreadable-json-response>');
+            }
+        } else {
+            responseBody = await response.text().catch(() => '<non-text-response>');
+        }
+
         if (!response.ok) {
-            const errorBody = await response.json();
-            console.error('Failed to send email via Resend:', JSON.stringify(errorBody));
+            console.error(`Failed to send email via Resend: status=${response.status} ${response.statusText} body=${redact(responseBody)}`);
             return { success: false, error: "email_send_failed" };
         }
+
+        console.info(`Email sent successfully to ${to} via Resend. status=${response.status}`);
         return { success: true };
     } catch (error) {
-        console.error('Error sending email via Resend:', error);
+        // Log concise error information (do not print full objects that may contain secrets)
+        const message = error && (error as any).message ? (error as any).message : String(error);
+        console.error('Error sending email via Resend:', message);
         return { success: false, error: "email_exception" };
     }
 }
