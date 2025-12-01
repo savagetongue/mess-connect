@@ -1,6 +1,6 @@
 # Mess Connect
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/savagetongue/mess-connect)
 
 Mess Connect is a comprehensive, subscription-based mess management system designed for seamless interaction between students, mess managers, and administrators. The platform operates on a robust, serverless architecture using Cloudflare Workers and Durable Objects, ensuring data persistence and high availability. It features distinct, role-based dashboards tailored to the specific needs of each user group.
 
@@ -75,7 +75,7 @@ This command will build the frontend assets and deploy the worker to your Cloudf
 
 Alternatively, you can deploy your own version of this project with a single click.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/savagetongue/mess-connect)
 
 ## Project Structure
 
