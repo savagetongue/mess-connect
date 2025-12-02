@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation } from "react-router-dom";
 import { Home, Settings, LogOut, Utensils, ShieldCheck, FileText, Lightbulb, DollarSign, Notebook, Users, Send, Bell, BookOpen } from "lucide-react";
 import {
   Sidebar,
@@ -18,6 +19,7 @@ interface AppSidebarProps {
 export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
   const logout = useAuth(s => s.logout);
   const { t } = useTranslation();
+  const location = useLocation();
   const getNavItems = () => {
     switch (userRole) {
       case 'student':
@@ -64,9 +66,9 @@ export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
         <SidebarGroup>
           <SidebarMenu>
             {getNavItems().map((item, index) => (
-              <SidebarMenuItem key={`${item.href}-${index}`}>
-                <SidebarMenuButton asChild>
-                  <a href={item.href}>{item.icon} <span>{item.label}</span></a>
+              <SidebarMenuItem key={`${item.href}-${index}`} role="menuitem" tabIndex={0}>
+                <SidebarMenuButton asChild className="transition-colors duration-200" aria-current={location.pathname === item.href ? "page" : undefined}>
+                  <a href={item.href} rel="internal">{item.icon} <span>{item.label}</span></a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
@@ -76,14 +78,14 @@ export function AppSidebar({ userRole }: AppSidebarProps): JSX.Element {
       <SidebarFooter>
         <SidebarMenu>
             {userRole === 'manager' && (
-              <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                      <a href="/manager/settings"><Settings /> <span>{t('sidebar_settings')}</span></a>
+              <SidebarMenuItem role="menuitem" tabIndex={0}>
+                  <SidebarMenuButton asChild className="transition-colors duration-200" aria-current={location.pathname === "/manager/settings" ? "page" : undefined}>
+                      <a href="/manager/settings" rel="internal"><Settings /> <span>{t('sidebar_settings')}</span></a>
                   </SidebarMenuButton>
               </SidebarMenuItem>
             )}
-            <SidebarMenuItem>
-                <SidebarMenuButton onClick={logout}>
+            <SidebarMenuItem role="menuitem" tabIndex={0}>
+                <SidebarMenuButton onClick={logout} className="transition-colors duration-200">
                     <LogOut /> <span>{t('sidebar_logout')}</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>

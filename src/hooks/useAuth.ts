@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { api } from '@/lib/api-client';
 import type { User as UserType, UserRole as UserRoleType } from '@shared/types';
+import { toast } from 'sonner';
 export type User = Omit<UserType, 'passwordHash'>;
 export type UserRole = UserRoleType;
 interface AuthState {
@@ -23,27 +24,20 @@ const useAuthStore = create<AuthState>()(
           body: JSON.stringify({ email, password }),
         });
         if (response.status === 'pending') {
+          toast.info("Registration pending", { description: "Your account is awaiting manager approval." });
           window.location.href = '/pending-approval';
           return;
         }
         if (response.token && response.id) {
           set({ user: response, token: response.token });
-          // Redirect after state update
           setTimeout(() => {
             const user = get().user;
             if (user) {
               switch (user.role) {
-                case 'student':
-                  window.location.href = '/student/dashboard';
-                  break;
-                case 'manager':
-                  window.location.href = '/manager/dashboard';
-                  break;
-                case 'admin':
-                  window.location.href = '/admin/dashboard';
-                  break;
-                default:
-                  window.location.href = '/';
+                case 'student': window.location.href = '/student/dashboard'; break;
+                case 'manager': window.location.href = '/manager/dashboard'; break;
+                case 'admin': window.location.href = '/admin/dashboard'; break;
+                default: window.location.href = '/';
               }
             }
           }, 0);
@@ -53,6 +47,7 @@ const useAuthStore = create<AuthState>()(
       },
       logout: () => {
         set({ user: null, token: null });
+        localStorage.removeItem('auth-storage'); // Ensure clean logout
         window.location.href = '/';
       },
     }),
@@ -70,7 +65,7 @@ useAuthStore.subscribe((state, prevState) => {
     const { token } = state;
     const path = window.location.pathname;
     const publicPaths = ['/', '/register', '/pending-approval', '/guest-payment'];
-    const isPublicPath = publicPaths.some(p => path.startsWith(p)) || path.startsWith('/verify/') || path.startsWith('/reset/');
+    const isPublicPath = publicPaths.some(p => path === p) || path.startsWith('/verify/') || path.startsWith('/reset/');
     if (!token && !isPublicPath) {
       window.location.href = '/';
     }

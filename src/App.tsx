@@ -6,6 +6,7 @@ import I18nProvider from '@/lib/i18n.tsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster } from "sonner";
 import { Utensils } from "lucide-react";
+import { useTranslation } from "./hooks/useTranslation";
 // Page Imports
 import { HomePage } from '@/pages/HomePage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -36,18 +37,21 @@ const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage')
 const AdminMenuPage = lazy(() => import('@/pages/admin/AdminMenuPage').then(module => ({ default: module.AdminMenuPage })));
 // Layout & Auth
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen bg-background">
-    <motion.div
-      initial={{ rotate: 0 }}
-      animate={{ rotate: 360 }}
-      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-    >
-      <Utensils className="h-12 w-12 text-orange-500" />
-    </motion.div>
-    <p className="ml-4 text-muted-foreground">Loading Mess Connect...</p>
-  </div>
-);
+const PageLoader = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <motion.div
+        initial={{ rotate: 0 }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      >
+        <Utensils className="h-12 w-12 text-orange-500" />
+      </motion.div>
+      <p className="ml-4 text-muted-foreground">{t('loading')}</p>
+    </div>
+  );
+};
 const AnimatedOutlet = () => {
   const location = useLocation();
   return (
@@ -111,7 +115,6 @@ export function App() {
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
       console.error('Global Error:', event.error);
-      // errorReporter?.report(event.error);
     };
     window.addEventListener('error', handleError);
     return () => {

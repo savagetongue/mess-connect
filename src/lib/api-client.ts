@@ -1,6 +1,7 @@
 import { ApiResponse } from "../../shared/types";
 import { useAuth } from "@/hooks/useAuth";
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+export async function api<T>(path: string, init?: RequestInit, retries = 1): Promise<T> {
   const start = performance.now();
   const { body, ...restInit } = init || {};
   let token: string | null = null;
@@ -35,17 +36,21 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       useAuth.getState().logout();
       throw new Error("Session expired. Please log in again.");
     }
+    if (res.status >= 500 && retries > 0) {
+      await delay(200); // Wait before retrying
+      return api(path, init, retries - 1);
+    }
     let json: ApiResponse<T> | null = null;
     try {
       const text = await res.text();
       json = text ? (JSON.parse(text) as ApiResponse<T>) : null;
     } catch (err) {
       if (!res.ok) {
-        throw new Error('An unexpected error occurred. Please try again.');
+        throw new Error(`API Error ${res.status}: ${res.statusText}`);
       }
     }
     if (!res.ok || !json || !json.success || json.data === undefined) {
-      const errorMessage = (json && json.error) || 'Request failed';
+      const errorMessage = (json && json.error) || `Request failed with status ${res.status}`;
       throw new Error(errorMessage);
     }
     return json.data;

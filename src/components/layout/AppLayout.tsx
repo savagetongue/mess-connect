@@ -20,7 +20,7 @@ export function AppLayout({ children, className, contentClassName }: AppLayoutPr
       <SidebarInset className={className}>
         <header className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between">
           <SidebarTrigger
-            aria-label="Toggle sidebar"
+            aria-label="Toggle navigation menu"
             className="hover:scale-105 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2"
           />
           <div className="hover:scale-105 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500/50 focus-visible:ring-offset-2 rounded-md">
@@ -28,16 +28,23 @@ export function AppLayout({ children, className, contentClassName }: AppLayoutPr
           </div>
         </header>
         <div className="flex flex-col min-h-screen pt-16">
-          <main role="main" aria-label="Main content" className="flex-1">
-            <motion.div
-              variants={{ visible: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } } }}
-              initial="hidden"
-              animate="visible"
+          <motion.main
+            role="main"
+            aria-labelledby="main-content-title"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0, scaleY: 0.98 },
+              visible: { opacity: 1, scaleY: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
+            }}
+            className="flex-1"
+          >
+            <div
               className={cn("max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12", contentClassName)}
             >
               {children}
-            </motion.div>
-          </main>
+            </div>
+          </motion.main>
         </div>
       </SidebarInset>
     </SidebarProvider>
