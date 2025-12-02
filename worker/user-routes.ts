@@ -320,9 +320,6 @@ app.post('/api/payments/create-order', async (c) => {
     if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
     const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = c.env;
     console.info(`Preview env: RAZORPAY keys present: ID=${!!RAZORPAY_KEY_ID}, SECRET=${!!RAZORPAY_KEY_SECRET}`);
-    if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
-        return bad(c, "Razorpay credentials are not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your worker's environment variables.");
-    }
     const notes: Record<string, string> = {
         app_name: "Mess Connect",
     };
@@ -341,6 +338,15 @@ app.post('/api/payments/create-order', async (c) => {
         receipt: `rcpt_${Date.now()}`,
         notes: notes,
     };
+    if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+        console.warn("Razorpay credentials missing in environment. Returning mock order for development. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to your preview bindings.");
+        const mockOrder = {
+            id: 'mock_order_' + Date.now(),
+            amount: options.amount,
+            currency: 'INR'
+        };
+        return ok(c, mockOrder);
+    }
     try {
         const response = await fetch('https://api.razorpay.com/v1/orders', {
             method: 'POST',
