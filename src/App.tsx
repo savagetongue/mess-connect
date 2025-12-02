@@ -1,5 +1,5 @@
 import React from "react";
-import { createBrowserRouter, RouterProvider, useLocation } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, useLocation, Outlet } from "react-router-dom";
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import I18nProvider from '@/lib/i18n.tsx';
@@ -34,47 +34,7 @@ import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminMenuPage } from '@/pages/admin/AdminMenuPage';
 // Layout & Auth
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-const createRoute = (path: string, element: JSX.Element) => ({
-  path,
-  element,
-  errorElement: <RouteErrorBoundary />,
-});
-const createProtectedRoute = (path: string, role: 'student' | 'manager' | 'admin', element: JSX.Element) => ({
-  path,
-  element: <ProtectedRoute role={role}>{element}</ProtectedRoute>,
-  errorElement: <RouteErrorBoundary />,
-});
-const router = createBrowserRouter([
-  // Public Routes
-  createRoute("/", <HomePage />),
-  createRoute("/register", <RegisterPage />),
-  createRoute("/pending-approval", <PendingApprovalPage />),
-  createRoute("/guest-payment", <GuestPaymentPage />),
-  createRoute("/verify/:token", <VerificationPage />),
-  createRoute("/reset/:token", <ResetPasswordPage />),
-  // Student Routes
-  createProtectedRoute("/student/dashboard", "student", <StudentDashboardPage />),
-  createProtectedRoute("/student/menu", "student", <WeeklyMenuPage />),
-  createProtectedRoute("/student/dues", "student", <MyDuesPage />),
-  createProtectedRoute("/student/complaints", "student", <ComplaintsPage />),
-  createProtectedRoute("/student/suggestions", "student", <SuggestionsPage />),
-  createProtectedRoute("/student/notifications", "student", <NotificationsPage />),
-  createProtectedRoute("/student/rules", "student", <MessRulesPage />),
-  // Manager Routes
-  createProtectedRoute("/manager/dashboard", "manager", <ManagerDashboardPage />),
-  createProtectedRoute("/manager/students", "manager", <StudentManagementPage />),
-  createProtectedRoute("/manager/menu", "manager", <UpdateMenuPage />),
-  createProtectedRoute("/manager/financials", "manager", <ManagerFinancialsPage />),
-  createProtectedRoute("/manager/feedback", "manager", <ManagerFeedbackPage />),
-  createProtectedRoute("/manager/suggestions", "manager", <ManagerSuggestionsPage />),
-  createProtectedRoute("/manager/notes", "manager", <ManagerNotesPage />),
-  createProtectedRoute("/manager/broadcast", "manager", <ManagerBroadcastPage />),
-  createProtectedRoute("/manager/settings", "manager", <ManagerSettingsPage />),
-  // Admin Routes
-  createProtectedRoute("/admin/dashboard", "admin", <AdminDashboardPage />),
-  createProtectedRoute("/admin/menu", "admin", <AdminMenuPage />),
-]);
-const AnimatedRoutes = () => {
+const AnimatedOutlet = () => {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
@@ -85,15 +45,55 @@ const AnimatedRoutes = () => {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
       >
-        <RouterProvider router={router} />
+        <Outlet />
       </motion.div>
     </AnimatePresence>
   );
 };
+const createProtectedRoute = (path: string, role: 'student' | 'manager' | 'admin', element: JSX.Element) => ({
+  path,
+  element: <ProtectedRoute role={role}>{element}</ProtectedRoute>,
+});
+const router = createBrowserRouter([
+  {
+    element: <AnimatedOutlet />,
+    errorElement: <RouteErrorBoundary />,
+    children: [
+      // Public Routes
+      { path: "/", element: <HomePage /> },
+      { path: "/register", element: <RegisterPage /> },
+      { path: "/pending-approval", element: <PendingApprovalPage /> },
+      { path: "/guest-payment", element: <GuestPaymentPage /> },
+      { path: "/verify/:token", element: <VerificationPage /> },
+      { path: "/reset/:token", element: <ResetPasswordPage /> },
+      // Student Routes
+      createProtectedRoute("/student/dashboard", "student", <StudentDashboardPage />),
+      createProtectedRoute("/student/menu", "student", <WeeklyMenuPage />),
+      createProtectedRoute("/student/dues", "student", <MyDuesPage />),
+      createProtectedRoute("/student/complaints", "student", <ComplaintsPage />),
+      createProtectedRoute("/student/suggestions", "student", <SuggestionsPage />),
+      createProtectedRoute("/student/notifications", "student", <NotificationsPage />),
+      createProtectedRoute("/student/rules", "student", <MessRulesPage />),
+      // Manager Routes
+      createProtectedRoute("/manager/dashboard", "manager", <ManagerDashboardPage />),
+      createProtectedRoute("/manager/students", "manager", <StudentManagementPage />),
+      createProtectedRoute("/manager/menu", "manager", <UpdateMenuPage />),
+      createProtectedRoute("/manager/financials", "manager", <ManagerFinancialsPage />),
+      createProtectedRoute("/manager/feedback", "manager", <ManagerFeedbackPage />),
+      createProtectedRoute("/manager/suggestions", "manager", <ManagerSuggestionsPage />),
+      createProtectedRoute("/manager/notes", "manager", <ManagerNotesPage />),
+      createProtectedRoute("/manager/broadcast", "manager", <ManagerBroadcastPage />),
+      createProtectedRoute("/manager/settings", "manager", <ManagerSettingsPage />),
+      // Admin Routes
+      createProtectedRoute("/admin/dashboard", "admin", <AdminDashboardPage />),
+      createProtectedRoute("/admin/menu", "admin", <AdminMenuPage />),
+    ],
+  },
+]);
 export function App() {
   return (
     <I18nProvider>
-      <ErrorBoundary fallback={(error) => <RouteErrorBoundary error={error} />}>
+      <ErrorBoundary fallback={(error) => <RouteErrorBoundary error={error as Error} />}>
         <RouterProvider router={router} />
       </ErrorBoundary>
     </I18nProvider>

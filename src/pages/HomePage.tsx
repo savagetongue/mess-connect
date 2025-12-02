@@ -53,8 +53,8 @@ export function HomePage() {
         method: 'POST',
         body: JSON.stringify(values),
       });
-      toast.info('If an account exists, a password reset link has been sent.', {
-        description: 'Please check your email inbox (and spam folder).',
+      toast.info('Password reset link sent!', {
+        description: 'If an account exists, you will receive an email. Please check your inbox (and spam folder).',
       });
       setForgotModalOpen(false);
       forgotPasswordForm.reset();
