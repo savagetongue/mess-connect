@@ -93,7 +93,7 @@ const router = createBrowserRouter([
 export function App() {
   return (
     <I18nProvider>
-      <ErrorBoundary fallback={(error) => <RouteErrorBoundary error={error as Error} />}>
+      <ErrorBoundary fallback={(error) => <RouteErrorBoundary error={error} />}>
         <RouterProvider router={router} />
       </ErrorBoundary>
     </I18nProvider>
