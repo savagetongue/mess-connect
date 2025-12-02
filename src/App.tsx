@@ -1,12 +1,11 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import { createBrowserRouter, RouterProvider, useLocation, Outlet } from "react-router-dom";
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import I18nProvider from '@/lib/i18n.tsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { Utensils } from "lucide-react";
 // Page Imports
 import { HomePage } from '@/pages/HomePage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -38,12 +37,16 @@ const AdminMenuPage = lazy(() => import('@/pages/admin/AdminMenuPage').then(modu
 // Layout & Auth
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 const PageLoader = () => (
-  <AppLayout>
-    <div className="space-y-4">
-      <Skeleton className="h-12 w-1/2" />
-      <Skeleton className="h-64 w-full" />
-    </div>
-  </AppLayout>
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <motion.div
+      initial={{ rotate: 0 }}
+      animate={{ rotate: 360 }}
+      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+    >
+      <Utensils className="h-12 w-12 text-orange-500" />
+    </motion.div>
+    <p className="ml-4 text-muted-foreground">Loading Mess Connect...</p>
+  </div>
 );
 const AnimatedOutlet = () => {
   const location = useLocation();
@@ -51,10 +54,10 @@ const AnimatedOutlet = () => {
     <AnimatePresence mode="wait">
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2, ease: 'easeInOut' }}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 20 }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
       >
         <Suspense fallback={<PageLoader />}>
           <Outlet />
@@ -105,6 +108,16 @@ const router = createBrowserRouter([
   },
 ]);
 export function App() {
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('Global Error:', event.error);
+      // errorReporter?.report(event.error);
+    };
+    window.addEventListener('error', handleError);
+    return () => {
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
   return (
     <I18nProvider>
       <ErrorBoundary fallback={() => <div>Something went wrong.</div>}>

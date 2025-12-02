@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,6 +15,14 @@ import type { Complaint } from "@shared/types";
 import { format } from "date-fns";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { motion } from "framer-motion";
+// A simple debounce function
+function debounce<T extends (...args: any[]) => void>(func: T, delay: number) {
+  let timeout: NodeJS.Timeout;
+  return function (this: ThisParameterType<T>, ...args: Parameters<T>) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), delay);
+  };
+}
 export function AdminDashboardPage() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +57,10 @@ export function AdminDashboardPage() {
         c.text.toLowerCase().includes(searchTerm.toLowerCase())
       );
   }, [complaints, searchTerm, statusFilter]);
+  useEffect(() => {
+    console.log('Testing complaints load:', filteredComplaints.length, 'complaints match filters.');
+  }, [filteredComplaints]);
+  const debouncedSearch = useMemo(() => debounce((term: string) => setSearchTerm(term), 300), []);
   return (
     <AppLayout>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -66,8 +78,7 @@ export function AdminDashboardPage() {
                     type="search"
                     placeholder="Search complaints..."
                     className="pl-8 w-full"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => debouncedSearch(e.target.value)}
                     aria-label="Search complaints by student name or text"
                   />
                 </div>
@@ -103,24 +114,25 @@ export function AdminDashboardPage() {
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Student</TableHead>
-                    <TableHead>Complaint</TableHead>
-                    <TableHead>Image</TableHead>
-                    <TableHead>Manager's Reply</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
+                  <TableRow role="rowgroup">
+                    <TableHead aria-label="Student name">Student</TableHead>
+                    <TableHead aria-label="Complaint text">Complaint</TableHead>
+                    <TableHead aria-label="Attached image">Image</TableHead>
+                    <TableHead aria-label="Manager's reply">Manager's Reply</TableHead>
+                    <TableHead aria-label="Date submitted">Date</TableHead>
+                    <TableHead aria-label="Complaint status">Status</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <motion.tbody initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ staggerChildren: 0.05 }}>
                   {filteredComplaints.map((complaint) => (
                     <motion.tr
                       key={complaint.id}
+                      layout
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
-                      whileHover={{ scale: 1.01 }}
-                      className="transition-colors hover:bg-muted/50"
+                      whileHover={{ backgroundColor: 'hsl(var(--accent))' }}
+                      className="transition-colors"
                     >
                       <TableCell className="font-medium">{complaint.studentName}</TableCell>
                       <TableCell className="max-w-xs truncate">{complaint.text}</TableCell>
@@ -142,16 +154,16 @@ export function AdminDashboardPage() {
                       </TableCell>
                     </motion.tr>
                   ))}
-                </TableBody>
+                </motion.tbody>
               </Table>
             )}
           </CardContent>
         </Card>
       </motion.div>
       <Dialog open={!!selectedImage} onOpenChange={(isOpen) => !isOpen && setSelectedImage(null)}>
-        <DialogContent>
+        <DialogContent role="dialog" aria-modal="true" aria-labelledby="dialog-title">
           <DialogHeader>
-            <DialogTitle>Complaint Image</DialogTitle>
+            <DialogTitle id="dialog-title">Complaint Image</DialogTitle>
           </DialogHeader>
           {selectedImage && (
             <div className="mt-2 w-full rounded-md overflow-hidden border">
