@@ -31,29 +31,22 @@ export function RegisterPage() {
   const onSubmit = async (values: RegisterFormValues) => {
     setIsLoading(true);
     try {
-      const response = await api<{ note?: string; status?: number; body?: string; detail?: string }>('/api/register', {
+      await api('/api/register', {
         method: 'POST',
         body: JSON.stringify(values),
       });
-      if (response.note === 'email_send_failed' || response.note === 'email_exception' || response.note === 'email_not_configured') {
-        toast.warning(t('accountCreatedEmailFailed'), {
-          description: `Email issue: ${response.note} (status: ${response.status || 'N/A'}). Manual approval pending. Check console.`,
-          duration: 7000,
-        });
-      } else {
-        toast.success(t('verificationEmailSent'), {
-          description: 'Please check your inbox to verify your email.',
-          duration: 5000,
-        });
-      }
+      toast.success('Account created!', {
+        description: 'Your registration is submitted and is awaiting manager approval.',
+        duration: 3000,
+      });
       setTimeout(() => {
         try {
-          navigate('/');
+          navigate('/pending-approval');
         } catch (e) {
           console.warn('Navigation failed, falling back to window.location:', e);
-          window.location.href = '/';
+          window.location.href = '/pending-approval';
         }
-      }, 5000);
+      }, 3000);
     } catch (error: any) {
       toast.error(error.message || 'Registration failed. Please try again.');
       setIsLoading(false);

@@ -160,26 +160,17 @@ app.post('/api/register', async (c) => {
     if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
     const { name, email, phone, password } = validation.data;
     if (await new UserEntity(c.env, email).exists()) return bad(c, 'User with this email already exists.');
-    const newUser = await UserEntity.create(c.env, { id: email, name, phone, passwordHash: password, role: 'student', status: 'pending', verified: false });
-    const token = crypto.randomUUID();
-    const expiresAt = Date.now() + 3600000; // 1 hour expiry
-    await VerificationTokenEntity.create(c.env, { id: token, userId: email, expiresAt, used: false });
-    const rawAppUrl = c.env.APP_URL || `https://${c.env.WORKER_DOMAIN}`;
-    const appUrl = rawAppUrl.replace(/\/$/, ""); // Remove trailing slash
-    const verificationLink = `${appUrl}/verify/${token}`;
-    const emailHtml = getEmailTemplate(
-        "Verify Your Email Address",
-        "Thanks for signing up for Mess Connect! Please click the button below to verify your email address.",
-        "Verify Email",
-        verificationLink
-    );
-    const emailResult = await sendEmail(c.env, email, "Mess Connect - Verify Your Email", emailHtml);
-    if (!emailResult.success) {
-        console.log(`Manual verification link for ${email}: ${verificationLink}`);
-    }
+    const newUser = await UserEntity.create(c.env, { 
+        id: email, 
+        name, 
+        phone, 
+        passwordHash: password, 
+        role: 'student', 
+        status: 'pending', 
+        verified: true // User is verified by default, but pending manager approval
+    });
     const { passwordHash, ...userResponse } = newUser;
-    const responseData = { ...userResponse, note: emailResult.success ? undefined : emailResult.error, ...(!emailResult.success && { ...emailResult }) };
-    return ok(c, responseData);
+    return ok(c, userResponse);
 });
 app.post('/api/login', async (c) => {
     const body = await c.req.json();
