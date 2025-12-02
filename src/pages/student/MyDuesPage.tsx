@@ -50,6 +50,25 @@ export function MyDuesPage() {
         method: 'POST',
         body: JSON.stringify({ amount: monthlyFee, studentId: user.id }),
       });
+      if (order.id.startsWith('mock_order_')) {
+        try {
+          await api('/api/payments/verify-payment', {
+            method: 'POST',
+            body: JSON.stringify({
+              razorpay_order_id: order.id,
+              razorpay_payment_id: 'mock_payment_' + Date.now(),
+              razorpay_signature: 'mock_signature',
+              amount: monthlyFee,
+              studentId: user.id,
+            }),
+          });
+          toast.success('Test payment successful!');
+          fetchData(); // Refresh dues
+        } catch (verifyError: any) {
+          toast.error(verifyError.message || 'Mock payment verification failed.');
+        }
+        return;
+      }
       const options = {
         key: 'rzp_test_Rc4X9qW2OGg1Ch',
         amount: order.amount,

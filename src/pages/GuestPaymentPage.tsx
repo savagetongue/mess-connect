@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Toaster, toast } from '@/components/ui/sonner';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { api } from '@/lib/api-client';
 import { Utensils, ArrowLeft } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -38,6 +38,28 @@ export function GuestPaymentPage() {
         method: 'POST',
         body: JSON.stringify({ amount: values.amount, name: values.name, phone: values.phone }),
       });
+      if (order.id.startsWith('mock_order_')) {
+        try {
+          await api('/api/payments/verify-payment', {
+            method: 'POST',
+            body: JSON.stringify({
+              razorpay_order_id: order.id,
+              razorpay_payment_id: 'mock_payment_' + Date.now(),
+              razorpay_signature: 'mock_signature',
+              amount: values.amount,
+              name: values.name,
+              phone: values.phone,
+            }),
+          });
+          toast.success('Test payment successful!', { description: 'Thank you for dining with us.' });
+          form.reset();
+        } catch (verifyError: any) {
+          toast.error(verifyError.message || 'Mock payment verification failed.');
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
       const options = {
         key: 'rzp_test_Rc4X9qW2OGg1Ch',
         amount: order.amount,
