@@ -5,7 +5,7 @@ import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEnt
 import { ok, bad, notFound, Index } from './core-utils';
 function bufferToBase64(buffer: ArrayBuffer): string {
   let binary = '';
-  const bytes = new Uint8Array(buffer);
+  const bytes = new UintArray(buffer);
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
@@ -50,7 +50,6 @@ const VerifyPaymentSchema = z.object({ razorpay_order_id: z.string(), razorpay_p
 // Email Sending Helper
 async function sendEmail(env: Env, to: string, subject: string, html: string) {
     const { RESEND_API_KEY, WORKER_DOMAIN } = env;
-    // Helpers for masking/redacting logs to avoid leaking secrets or very long responses
     const maskKey = (s: string) => {
         if (!s) return '';
         if (s.length <= 8) return '****';
@@ -72,6 +71,7 @@ async function sendEmail(env: Env, to: string, subject: string, html: string) {
         return { success: false, error: "email_not_configured" };
     }
     const key = RESEND_API_KEY.trim();
+    console.info(`sendEmail preview: hasResendKey: ${!!key && key.trim().length > 0}`);
     if (key === '') {
         console.error("ERROR: RESEND_API_KEY is set but is an empty string. Email functionality is disabled.");
         return { success: false, error: "email_not_configured" };
@@ -101,7 +101,6 @@ async function sendEmail(env: Env, to: string, subject: string, html: string) {
                 const json = await response.json();
                 responseBody = JSON.stringify(json);
             } catch (e) {
-                // Fallback to text if JSON parsing fails
                 responseBody = await response.text().catch(() => '<unreadable-json-response>');
             }
         } else {
@@ -109,15 +108,14 @@ async function sendEmail(env: Env, to: string, subject: string, html: string) {
         }
         if (!response.ok) {
             console.error(`Failed to send email via Resend: status=${response.status} ${response.statusText} body=${redact(responseBody)}`);
-            return { success: false, error: "email_send_failed" };
+            return { success: false, error: "email_send_failed", status: response.status, body: redact(responseBody) };
         }
         console.info(`Email sent successfully to ${to} via Resend. status=${response.status}`);
         return { success: true };
     } catch (error) {
-        // Log concise error information (do not print full objects that may contain secrets)
         const message = error && (error as any).message ? (error as any).message : String(error);
         console.error('Error sending email via Resend:', message);
-        return { success: false, error: "email_exception" };
+        return { success: false, error: "email_exception", detail: message };
     }
 }
 const getEmailTemplate = (title: string, body: string, buttonText: string, link: string) => `
@@ -166,8 +164,9 @@ app.post('/api/register', async (c) => {
     const token = crypto.randomUUID();
     const expiresAt = Date.now() + 3600000; // 1 hour expiry
     await VerificationTokenEntity.create(c.env, { id: token, userId: email, expiresAt, used: false });
-    const appUrl = c.env.APP_URL || `https://${c.env.WORKER_DOMAIN}`;
-    const verificationLink = `${appUrl}/api/verify-email/${token}`;
+    const rawAppUrl = c.env.APP_URL || `https://${c.env.WORKER_DOMAIN}`;
+    const appUrl = rawAppUrl.replace(/\/$/, ""); // Remove trailing slash
+    const verificationLink = `${appUrl}/verify/${token}`;
     const emailHtml = getEmailTemplate(
         "Verify Your Email Address",
         "Thanks for signing up for Mess Connect! Please click the button below to verify your email address.",
@@ -179,7 +178,7 @@ app.post('/api/register', async (c) => {
         console.log(`Manual verification link for ${email}: ${verificationLink}`);
     }
     const { passwordHash, ...userResponse } = newUser;
-    const responseData = { ...userResponse, note: emailResult.success ? undefined : emailResult.error };
+    const responseData = { ...userResponse, note: emailResult.success ? undefined : emailResult.error, ...(!emailResult.success && { ...emailResult }) };
     return ok(c, responseData);
 });
 app.post('/api/login', async (c) => {
@@ -223,8 +222,9 @@ app.post('/api/forgot-password', async (c) => {
     const token = crypto.randomUUID();
     const expiresAt = Date.now() + 3600000; // 1 hour expiry
     await ResetTokenEntity.create(c.env, { id: token, userId: email, expiresAt, used: false });
-    const appUrl = c.env.APP_URL || `https://${c.env.WORKER_DOMAIN}`;
-    const resetLink = `${appUrl}/api/reset-password/${token}`;
+    const rawAppUrl = c.env.APP_URL || `https://${c.env.WORKER_DOMAIN}`;
+    const appUrl = rawAppUrl.replace(/\/$/, ""); // Remove trailing slash
+    const resetLink = `${appUrl}/reset/${token}`;
     const emailHtml = getEmailTemplate(
         "Reset Your Password",
         "You requested a password reset for your Mess Connect account. Click the button below to set a new password.",
@@ -255,6 +255,11 @@ app.post('/api/reset-password/:token', async (c) => {
 });
 // PROTECTED ROUTES & OTHER ROUTES...
 app.use('/*', getUser);
+app.get('/api/_debug/env/resend', getUser, async (c) => {
+    const user = (c as any).get('user') as User | undefined;
+    if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
+    return ok(c, { hasResendKey: !!(c.env.RESEND_API_KEY && c.env.RESEND_API_KEY.trim()) });
+});
 // ... (The rest of the routes remain unchanged)
 app.get('/api/menu', async (c) => {
     const menuEntity = new MenuEntity(c.env, 'singleton');
