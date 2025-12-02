@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,26 +25,31 @@ export function MyDuesPage() {
   const [monthlyFee, setMonthlyFee] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const fetchData = async () => {
+  const [isPaying, setIsPaying] = useState(false);
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [duesData, feeData] = await Promise.all([
         api<{ payments: Payment[] }>('/api/student/dues'),
         api<{ monthlyFee: number }>('/api/settings')
       ]);
-      setPayments(duesData.payments.sort((a, b) => b.createdAt - a.createdAt));
+      setPayments(duesData.payments?.sort((a, b) => b.createdAt - a.createdAt) || []);
       setMonthlyFee(feeData.monthlyFee);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch payment history.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
   const handlePayment = async () => {
-    if (!monthlyFee || !user) return;
+    if (!monthlyFee || !user?.id) {
+      toast.error('User not authenticated or monthly fee not set.');
+      return;
+    }
+    setIsPaying(true);
     try {
       const order = await api<{ id: string; amount: number; currency: string }>('/api/payments/create-order', {
         method: 'POST',
@@ -66,6 +71,8 @@ export function MyDuesPage() {
           fetchData(); // Refresh dues
         } catch (verifyError: any) {
           toast.error(verifyError.message || 'Mock payment verification failed.');
+        } finally {
+          setIsPaying(false);
         }
         return;
       }
@@ -90,6 +97,13 @@ export function MyDuesPage() {
             fetchData(); // Refresh dues
           } catch (verifyError: any) {
             toast.error(verifyError.message || 'Payment verification failed.');
+          } finally {
+            setIsPaying(false);
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            setIsPaying(false);
           }
         },
         prefill: {
@@ -105,6 +119,7 @@ export function MyDuesPage() {
       rzp.open();
     } catch (error: any) {
       toast.error(error.message || 'Failed to create payment order.');
+      setIsPaying(false);
     }
   };
   const currentMonthStr = format(new Date(), "yyyy-MM");
@@ -128,8 +143,8 @@ export function MyDuesPage() {
                 <p className="text-2xl font-bold">₹{monthlyFee?.toLocaleString() ?? '...'}</p>
               )}
             </div>
-            <Button onClick={handlePayment} disabled={isCurrentMonthPaid || loading || !monthlyFee}>
-              {isCurrentMonthPaid ? t('paid') : t('payNowButton')}
+            <Button onClick={handlePayment} disabled={isCurrentMonthPaid || loading || !monthlyFee || isPaying}>
+              {isPaying ? t('processingButton') : isCurrentMonthPaid ? t('paid') : t('payNowButton')}
             </Button>
           </div>
           <h3 className="text-lg font-semibold mb-2">{t('paymentHistory')}</h3>

@@ -32,7 +32,7 @@ export function ComplaintsPage() {
     setLoadingComplaints(true);
     try {
       const data = await api<{ complaints: Complaint[] }>('/api/student/complaints');
-      setPastComplaints(data.complaints.sort((a, b) => b.createdAt - a.createdAt));
+      setPastComplaints(data.complaints?.sort((a, b) => b.createdAt - a.createdAt) || []);
     } catch (error) {
       toast.error("Failed to load past complaints.");
     } finally {

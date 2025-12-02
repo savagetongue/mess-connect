@@ -10,7 +10,7 @@ export function VerificationPage() {
   const [message, setMessage] = useState('Registration successful. Awaiting approval.');
   useEffect(() => {
     // This page now acts as a graceful handler for any old verification links.
-    setMessage('Redirecting you to the approval status page...');
+    setMessage(t('redirectingToApproval', { defaultValue: 'Redirecting you to the approval status page...' }));
     const timer = setTimeout(() => {
       try {
         navigate('/pending-approval');
@@ -21,7 +21,7 @@ export function VerificationPage() {
       }
     }, 2000);
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, t]);
   const handleRedirectManually = () => {
     try {
       navigate('/pending-approval');
@@ -39,7 +39,7 @@ export function VerificationPage() {
           <CardTitle className="mt-4">Registration Submitted</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">{message}</p>
+          <p className="text-muted-foreground" aria-live="polite">{message}</p>
           <Button onClick={handleRedirectManually} className="mt-6 w-full bg-orange-500 hover:bg-orange-600 text-white">
             Go to Status Page
           </Button>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,7 +31,7 @@ export function ResetPasswordPage() {
   });
   const onSubmit = async (values: ResetPasswordFormValues) => {
     if (!token) {
-      setError("No reset token provided.");
+      setError(t('invalidResetLink', { defaultValue: "No reset token provided. The link is invalid."}));
       return;
     }
     try {
@@ -42,8 +42,8 @@ export function ResetPasswordPage() {
       toast.success('Password reset successfully!', {
         description: 'You can now log in with your new password.',
         duration: 3000,
-        onAutoClose: () => navigate('/'),
       });
+      setTimeout(() => navigate('/'), 3000);
     } catch (err: any) {
       setError(err.message || 'Failed to reset password. The link may be invalid or expired.');
     }
@@ -68,7 +68,7 @@ export function ResetPasswordPage() {
               <FormField control={form.control} name="password" render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('newPasswordLabel')}</FormLabel>
-                  <FormControl><Input type="password" placeholder="��•••••••" {...field} /></FormControl>
+                  <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -79,7 +79,7 @@ export function ResetPasswordPage() {
                   <FormMessage />
                 </FormItem>
               )} />
-              <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white" disabled={form.formState.isSubmitting}>
+              <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white" disabled={form.formState.isSubmitting || !token}>
                 {form.formState.isSubmitting ? t('processingButton') : t('resetPasswordButton')}
               </Button>
             </form>

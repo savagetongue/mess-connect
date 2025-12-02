@@ -84,13 +84,13 @@ export function HomePage() {
         </TabsList>
         <Form {...loginForm}>
           <form onSubmit={loginForm.handleSubmit(onLoginSubmit)}>
-            <TabsContent value="student">
+            <TabsContent value="student" key="student">
               <LoginCard role="Student" onForgotPassword={() => setForgotModalOpen(true)} />
             </TabsContent>
-            <TabsContent value="manager">
+            <TabsContent value="manager" key="manager">
               <LoginCard role="Manager" onForgotPassword={() => setForgotModalOpen(true)} />
             </TabsContent>
-            <TabsContent value="admin">
+            <TabsContent value="admin" key="admin">
               <LoginCard role="Admin" onForgotPassword={() => setForgotModalOpen(true)} />
             </TabsContent>
           </form>
