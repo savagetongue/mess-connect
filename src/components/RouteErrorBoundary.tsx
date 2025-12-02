@@ -4,9 +4,10 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Home, AlertCircle } from 'lucide-react';
 import '@/lib/errorReporter'; // Assuming this sets up a global error reporter
-export function RouteErrorBoundary() {
-  const error = useRouteError();
-  console.error('Route Error:', error);
+export function RouteErrorBoundary({ error: propError }: { error?: unknown }) {
+  const routeError = useRouteError();
+  const error = propError ?? routeError;
+  console.error('Boundary Error:', error);
   // In a real app, you would report this error to a service like Sentry, LogRocket, etc.
   // The imported errorReporter is a placeholder for this functionality.
   return (

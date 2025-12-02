@@ -93,7 +93,7 @@ const AnimatedRoutes = () => {
 export function App() {
   return (
     <I18nProvider>
-      <ErrorBoundary fallback={<RouteErrorBoundary />}>
+      <ErrorBoundary fallback={(error) => <RouteErrorBoundary error={error} />}>
         <RouterProvider router={router} />
       </ErrorBoundary>
     </I18nProvider>

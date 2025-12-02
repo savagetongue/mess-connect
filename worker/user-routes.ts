@@ -51,6 +51,7 @@ const VerifyPaymentSchema = z.object({ razorpay_order_id: z.string(), razorpay_p
 async function sendEmail(env: Env, to: string, subject: string, html: string) {
     const { RESEND_API_KEY, WORKER_DOMAIN } = env;
     const key = typeof RESEND_API_KEY === 'string' ? RESEND_API_KEY.trim() : '';
+    console.info(`Preview env: RESEND key present: ${!!key && key !== ''}`);
     if (!key) {
         console.error("RESEND_API_KEY environment variable not set or empty. Skipping email send.");
         return { success: false, error: "email_not_configured" };
@@ -137,7 +138,7 @@ const getUser = async (c: any, next: any) => {
     await next();
 };
 export function userRoutes(app: Hono<{ Bindings: Env, Variables: HonoVariables }>) {
-app.use('/api/*', async (c, next) => {
+app.use('/*', async (c, next) => {
     const adminEmail = 'admin@messconnect.com';
     const managerEmail = 'manager@messconnect.com';
     const adminUser = new UserEntity(c.env, adminEmail);
@@ -151,7 +152,7 @@ app.use('/api/*', async (c, next) => {
     await next();
 });
 // PUBLIC ROUTES
-app.post('/api/register', async (c) => {
+app.post('/register', async (c) => {
     const body = await c.req.json();
     const validation = RegisterSchema.safeParse(body);
     if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
@@ -177,7 +178,7 @@ app.post('/api/register', async (c) => {
     const responseData = { ...userResponse, note: emailResult.success ? undefined : emailResult.error };
     return ok(c, responseData);
 });
-app.post('/api/login', async (c) => {
+app.post('/login', async (c) => {
     const body = await c.req.json();
     const validation = LoginSchema.safeParse(body);
     if (!validation.success) return bad(c, 'Invalid email or password format.');
@@ -193,7 +194,7 @@ app.post('/api/login', async (c) => {
     const { passwordHash, ...userResponse } = user;
     return ok(c, { ...userResponse, token: `fake-token-for-${user.id}` });
 });
-app.get('/api/verify-email/:token', async (c) => {
+app.get('/verify-email/:token', async (c) => {
     const token = c.req.param('token');
     const tokenEntity = new VerificationTokenEntity(c.env, token);
     if (!await tokenEntity.exists()) return notFound(c, 'Invalid verification token.');
@@ -206,7 +207,7 @@ app.get('/api/verify-email/:token', async (c) => {
     await tokenEntity.patch({ used: true });
     return ok(c, { message: 'Email verified successfully.' });
 });
-app.post('/api/forgot-password', async (c) => {
+app.post('/forgot-password', async (c) => {
     const body = await c.req.json();
     const validation = ForgotPasswordSchema.safeParse(body);
     if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
@@ -232,7 +233,7 @@ app.post('/api/forgot-password', async (c) => {
     }
     return ok(c, { message: 'If an account with this email exists, a password reset link has been sent.' });
 });
-app.post('/api/reset-password/:token', async (c) => {
+app.post('/reset-password/:token', async (c) => {
     const token = c.req.param('token');
     const body = await c.req.json();
     const validation = ResetPasswordSchema.safeParse(body);
@@ -249,14 +250,14 @@ app.post('/api/reset-password/:token', async (c) => {
     return ok(c, { message: 'Password has been reset successfully.' });
 });
 // PROTECTED ROUTES & OTHER ROUTES...
-app.use('/api/*', getUser);
+app.use('/*', getUser);
 // ... (The rest of the routes remain unchanged)
-app.get('/api/menu', async (c) => {
+app.get('/menu', async (c) => {
     const menuEntity = new MenuEntity(c.env, 'singleton');
     if (!await menuEntity.exists()) await menuEntity.save(MenuEntity.initialState);
     return ok(c, await menuEntity.getState());
 });
-app.post('/api/complaints', async (c) => {
+app.post('/complaints', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const formData = await c.req.formData();
@@ -281,7 +282,7 @@ app.post('/api/complaints', async (c) => {
     });
     return ok(c, complaint);
 });
-app.post('/api/suggestions', async (c) => {
+app.post('/suggestions', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const body = await c.req.json();
@@ -291,7 +292,7 @@ app.post('/api/suggestions', async (c) => {
     const suggestion = await SuggestionEntity.create(c.env, { id: crypto.randomUUID(), studentId: user.id, studentName: user.name, text, createdAt: Date.now() });
     return ok(c, suggestion);
 });
-app.get('/api/settings', async (c) => {
+app.get('/settings', async (c) => {
     const user = c.get('user');
     if (!user) return c.json({ success: false, error: 'Unauthorized' }, 401);
     const settingEntity = new SettingEntity(c.env, 'singleton');
@@ -302,12 +303,13 @@ app.get('/api/settings', async (c) => {
     return ok(c, { monthlyFee: settings.monthlyFee, messRules: settings.messRules });
 });
 // PAYMENT FLOW
-app.post('/api/payments/create-order', async (c) => {
+app.post('/payments/create-order', async (c) => {
     const user = c.get('user');
     const body = await c.req.json();
     const validation = CreateOrderSchema.safeParse(body);
     if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
     const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = c.env;
+    console.info(`Preview env: RAZORPAY keys present: ID=${!!RAZORPAY_KEY_ID}, SECRET=${!!RAZORPAY_KEY_SECRET}`);
     if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
         return bad(c, "Razorpay credentials are not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your worker's environment variables.");
     }
@@ -348,11 +350,12 @@ app.post('/api/payments/create-order', async (c) => {
         return bad(c, 'An error occurred while creating the payment order.');
     }
 });
-app.post('/api/payments/verify-payment', async (c) => {
+app.post('/payments/verify-payment', async (c) => {
     const body = await c.req.json();
     const validation = VerifyPaymentSchema.safeParse(body);
     if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
     const { RAZORPAY_KEY_SECRET } = c.env;
+    console.info(`Preview env: RAZORPAY_SECRET present: ${!!RAZORPAY_KEY_SECRET}`);
     if (!RAZORPAY_KEY_SECRET) {
         return bad(c, 'Razorpay secret is not configured.');
     }
@@ -402,28 +405,28 @@ app.post('/api/payments/verify-payment', async (c) => {
     }
 });
 // STUDENT ROUTES
-app.get('/api/student/dues', async (c) => {
+app.get('/student/dues', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const allPayments = (await PaymentEntity.list(c.env)).items;
     const studentPayments = allPayments.filter(p => p.userId === user.id);
     return ok(c, { payments: studentPayments });
 });
-app.get('/api/student/complaints', async (c) => {
+app.get('/student/complaints', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const allComplaints = (await ComplaintEntity.list(c.env)).items;
     const studentComplaints = allComplaints.filter(complaint => complaint.studentId === user.id);
     return ok(c, { complaints: studentComplaints });
 });
-app.get('/api/student/suggestions', async (c) => {
+app.get('/student/suggestions', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const allSuggestions = (await SuggestionEntity.list(c.env)).items;
     const studentSuggestions = allSuggestions.filter(suggestion => suggestion.studentId === user.id);
     return ok(c, { suggestions: studentSuggestions });
 });
-app.get('/api/student/notifications', async (c) => {
+app.get('/student/notifications', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'student') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const allNotifications = (await NotificationEntity.list(c.env)).items;
@@ -431,13 +434,13 @@ app.get('/api/student/notifications', async (c) => {
     return ok(c, { notifications: studentNotifications });
 });
 // MANAGER & ADMIN ROUTES
-app.get('/api/complaints/all', async (c) => {
+app.get('/complaints/all', async (c) => {
     const user = c.get('user');
     if (!user || (user.role !== 'manager' && user.role !== 'admin')) return c.json({ success: false, error: 'Unauthorized' }, 401);
     const allComplaints = (await ComplaintEntity.list(c.env)).items;
     return ok(c, { complaints: allComplaints });
 });
-app.post('/api/complaints/:id/reply', async (c) => {
+app.post('/complaints/:id/reply', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const complaintId = c.req.param('id');
@@ -450,7 +453,7 @@ app.post('/api/complaints/:id/reply', async (c) => {
     return ok(c, { message: 'Reply added successfully.' });
 });
 // MANAGER ROUTES
-app.get('/api/manager/stats', async (c) => {
+app.get('/manager/stats', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const allUsers = (await UserEntity.list(c.env)).items;
@@ -477,14 +480,14 @@ app.get('/api/manager/stats', async (c) => {
     const monthlyRevenue = guestRevenue + studentRevenue;
     return ok(c, { totalStudents, pendingApprovals, monthlyRevenue });
 });
-app.get('/api/students', async (c) => {
+app.get('/students', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const allUsers = (await UserEntity.list(c.env)).items;
     const students = allUsers.filter(u => u.role === 'student').map(({ passwordHash, ...rest }) => rest);
     return ok(c, { students });
 });
-app.post('/api/students/:id/approve', async (c) => {
+app.post('/students/:id/approve', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const studentId = c.req.param('id');
@@ -493,7 +496,7 @@ app.post('/api/students/:id/approve', async (c) => {
     await studentEntity.patch({ status: 'approved' });
     return ok(c, { message: 'Student approved successfully.' });
 });
-app.post('/api/students/:id/reject', async (c) => {
+app.post('/students/:id/reject', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const studentId = c.req.param('id');
@@ -502,7 +505,7 @@ app.post('/api/students/:id/reject', async (c) => {
     await studentEntity.patch({ status: 'rejected' });
     return ok(c, { message: 'Student rejected successfully.' });
 });
-app.post('/api/students/:id/notify', async (c) => {
+app.post('/students/:id/notify', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const studentId = c.req.param('id');
@@ -519,7 +522,7 @@ app.post('/api/students/:id/notify', async (c) => {
     });
     return ok(c, { message: `Notification sent to student.` });
 });
-app.delete('/api/students/:id', async (c) => {
+app.delete('/students/:id', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const studentId = c.req.param('id');
@@ -527,7 +530,7 @@ app.delete('/api/students/:id', async (c) => {
     if (!deleted) return notFound(c, 'Student not found.');
     return ok(c, { message: 'Student deleted successfully.' });
 });
-app.put('/api/menu', async (c) => {
+app.put('/menu', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const body = await c.req.json();
@@ -537,7 +540,7 @@ app.put('/api/menu', async (c) => {
     await menuEntity.save(validation.data as WeeklyMenu);
     return ok(c, await menuEntity.getState());
 });
-app.get('/api/financials', async (c) => {
+app.get('/financials', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const allUsers = (await UserEntity.list(c.env)).items;
@@ -546,13 +549,13 @@ app.get('/api/financials', async (c) => {
     const guestPayments = (await GuestPaymentEntity.list(c.env)).items;
     return ok(c, { students, payments, guestPayments });
 });
-app.get('/api/suggestions/all', async (c) => {
+app.get('/suggestions/all', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const allSuggestions = (await SuggestionEntity.list(c.env)).items;
     return ok(c, { suggestions: allSuggestions });
 });
-app.post('/api/suggestions/:id/reply', async (c) => {
+app.post('/suggestions/:id/reply', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const suggestionId = c.req.param('id');
@@ -565,13 +568,13 @@ app.post('/api/suggestions/:id/reply', async (c) => {
     return ok(c, { message: 'Reply added successfully.' });
 });
 // Manager Notes Routes
-app.get('/api/notes', async (c) => {
+app.get('/notes', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const allNotes = (await NoteEntity.list(c.env)).items;
     return ok(c, { notes: allNotes });
 });
-app.post('/api/notes', async (c) => {
+app.post('/notes', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const body = await c.req.json();
@@ -580,7 +583,7 @@ app.post('/api/notes', async (c) => {
     const note = await NoteEntity.create(c.env, { id: crypto.randomUUID(), text: validation.data.text, completed: false, createdAt: Date.now() });
     return ok(c, note);
 });
-app.put('/api/notes/:id', async (c) => {
+app.put('/notes/:id', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const noteId = c.req.param('id');
@@ -592,7 +595,7 @@ app.put('/api/notes/:id', async (c) => {
     await noteEntity.patch({ completed: validation.data.completed });
     return ok(c, await noteEntity.getState());
 });
-app.delete('/api/notes/:id', async (c) => {
+app.delete('/notes/:id', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const noteId = c.req.param('id');
@@ -601,7 +604,7 @@ app.delete('/api/notes/:id', async (c) => {
     return ok(c, { message: 'Note deleted successfully.' });
 });
 // Manager Settings
-app.post('/api/settings/clear-all-data', async (c) => {
+app.post('/settings/clear-all-data', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const entityClasses = [UserEntity, ComplaintEntity, SuggestionEntity, MenuEntity, PaymentEntity, GuestPaymentEntity, NoteEntity, SettingEntity, NotificationEntity, VerificationTokenEntity, ResetTokenEntity];
@@ -614,7 +617,7 @@ app.post('/api/settings/clear-all-data', async (c) => {
     }
     return ok(c, { message: 'All application data has been cleared.' });
 });
-app.get('/api/settings/fee', async (c) => {
+app.get('/settings/fee', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const settingEntity = new SettingEntity(c.env, 'singleton');
@@ -624,7 +627,7 @@ app.get('/api/settings/fee', async (c) => {
     const settings = await settingEntity.getState();
     return ok(c, { monthlyFee: settings.monthlyFee });
 });
-app.post('/api/settings/fee', async (c) => {
+app.post('/settings/fee', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const body = await c.req.json();
@@ -634,7 +637,7 @@ app.post('/api/settings/fee', async (c) => {
     await settingEntity.patch({ monthlyFee: validation.data.monthlyFee });
     return ok(c, { message: 'Monthly fee updated successfully.' });
 });
-app.post('/api/settings/rules', async (c) => {
+app.post('/settings/rules', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const body = await c.req.json();
@@ -645,7 +648,7 @@ app.post('/api/settings/rules', async (c) => {
     return ok(c, { message: 'Mess rules updated successfully.' });
 });
 // New Manager Routes
-app.post('/api/broadcast', async (c) => {
+app.post('/broadcast', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const body = await c.req.json();
@@ -663,7 +666,7 @@ app.post('/api/broadcast', async (c) => {
     }
     return ok(c, { message: `Broadcast sent to ${approvedStudents.length} students.` });
 });
-app.post('/api/payments/mark-as-paid', async (c) => {
+app.post('/payments/mark-as-paid', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     const body = await c.req.json();
@@ -693,7 +696,7 @@ app.post('/api/payments/mark-as-paid', async (c) => {
     return ok(c, payment);
 });
 // TEMPORARY CLEANUP ENDPOINT - TO BE REMOVED AFTER ONE-TIME USE
-app.post('/api/manager/cleanup-test-accounts', async (c) => {
+app.post('/manager/cleanup-test-accounts', async (c) => {
     const user = c.get('user');
     if (!user || user.role !== 'manager') return c.json({ success: false, error: 'Unauthorized' }, 401);
     try {

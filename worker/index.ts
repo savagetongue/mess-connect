@@ -21,12 +21,12 @@ export interface ClientErrorReport {
     colno?: number;
     error?: unknown;
   }
-const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
+const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>().basePath('/api');
 app.use('*', logger());
-app.use('/api/*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization'] }));
+app.use('/*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowHeaders: ['Content-Type', 'Authorization'] }));
 userRoutes(app);
-app.get('/api/health', (c) => c.json({ success: true, data: { status: 'healthy', timestamp: new Date().toISOString() }}));
-app.post('/api/client-errors', async (c) => {
+app.get('/health', (c) => c.json({ success: true, data: { status: 'healthy', timestamp: new Date().toISOString() }}));
+app.post('/client-errors', async (c) => {
   try {
     const e = await c.req.json<ClientErrorReport>();
     if (!e.message) return c.json({ success: false, error: 'Missing required fields' }, 400);
