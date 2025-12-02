@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm, useFormContext } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -130,7 +130,6 @@ export function HomePage() {
   );
 }
 function LoginCard({ role, onForgotPassword }: { role: 'Student' | 'Manager' | 'Admin', onForgotPassword: () => void }) {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const form = useFormContext<LoginFormValues>();
   const isLoading = form.formState.isSubmitting;
@@ -179,14 +178,14 @@ function LoginCard({ role, onForgotPassword }: { role: 'Student' | 'Manager' | '
         {role === 'Student' && (
           <div className="text-center text-sm">
             {t('noAccount')}{' '}
-            <Button type="button" variant="link" className="p-0 h-auto text-orange-500" onClick={() => navigate('/register')}>
-              {t('registerHere')}
+            <Button asChild variant="link" className="p-0 h-auto text-orange-500">
+              <Link to="/register">{t('registerHere')}</Link>
             </Button>
           </div>
         )}
         <div className="text-center text-sm">
-            <Button type="button" variant="link" className="p-0 h-auto text-orange-500" onClick={() => navigate('/guest-payment')}>
-              {t('guestPaymentLink')}
+            <Button asChild variant="link" className="p-0 h-auto text-orange-500">
+              <Link to="/guest-payment">{t('guestPaymentLink')}</Link>
             </Button>
           </div>
       </CardContent>

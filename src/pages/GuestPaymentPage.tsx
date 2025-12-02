@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Toaster, toast } from '@/components/ui/sonner';
-import { ThemeToggle } from "../components/ThemeToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { api } from '@/lib/api-client';
 import { Utensils, ArrowLeft } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -151,12 +151,10 @@ export function GuestPaymentPage() {
                       {...field}
                       onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
                       value={field.value ?? ''} />
-
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 } />
-
               <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white" disabled={isLoading}>
                 {isLoading ? t('processingButton') : t('payNowButton')}
               </Button>
@@ -166,5 +164,4 @@ export function GuestPaymentPage() {
       </Card>
       <Toaster richColors />
     </div>);
-
 }
