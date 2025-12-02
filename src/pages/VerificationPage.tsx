@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,19 +9,26 @@ export function VerificationPage() {
   const { t } = useTranslation();
   const [message, setMessage] = useState('Registration successful. Awaiting approval.');
   useEffect(() => {
-    // This page is no longer used for active verification.
-    // It now acts as a graceful handler for any old links.
+    // This page now acts as a graceful handler for any old verification links.
     setMessage('Redirecting you to the approval status page...');
     const timer = setTimeout(() => {
       try {
         navigate('/pending-approval');
       } catch (e) {
         console.warn('Navigation failed, falling back to window.location:', e);
+        // Fallback for environments where navigate might fail during HMR or other edge cases.
         window.location.href = '/pending-approval';
       }
     }, 2000);
     return () => clearTimeout(timer);
   }, [navigate]);
+  const handleRedirectManually = () => {
+    try {
+      navigate('/pending-approval');
+    } catch (e) {
+      window.location.href = '/pending-approval';
+    }
+  };
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md text-center animate-scale-in">
@@ -33,7 +40,7 @@ export function VerificationPage() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">{message}</p>
-          <Button onClick={() => navigate('/pending-approval')} className="mt-6 w-full bg-orange-500 hover:bg-orange-600 text-white">
+          <Button onClick={handleRedirectManually} className="mt-6 w-full bg-orange-500 hover:bg-orange-600 text-white">
             Go to Status Page
           </Button>
         </CardContent>

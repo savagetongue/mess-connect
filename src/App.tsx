@@ -66,6 +66,7 @@ const AnimatedOutlet = () => {
 const createProtectedRoute = (path: string, role: 'student' | 'manager' | 'admin', element: JSX.Element) => ({
   path,
   element: <ProtectedRoute role={role}>{element}</ProtectedRoute>,
+  errorElement: <RouteErrorBoundary />,
 });
 const router = createBrowserRouter([
   {
