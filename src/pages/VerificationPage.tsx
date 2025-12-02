@@ -1,25 +1,33 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 export function VerificationPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [message, setMessage] = useState('Registration successful. Awaiting approval.');
   useEffect(() => {
-    // This page is no longer used for verification.
+    // This page is no longer used for active verification.
     // It now acts as a graceful handler for any old links.
     setMessage('Redirecting you to the approval status page...');
-    setTimeout(() => navigate('/pending-approval'), 2000);
+    const timer = setTimeout(() => {
+      try {
+        navigate('/pending-approval');
+      } catch (e) {
+        console.warn('Navigation failed, falling back to window.location:', e);
+        window.location.href = '/pending-approval';
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
   }, [navigate]);
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md text-center animate-scale-in">
         <CardHeader>
           <div className="mx-auto rounded-full p-3 w-fit">
-            <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+            <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
           </div>
           <CardTitle className="mt-4">Registration Submitted</CardTitle>
         </CardHeader>

@@ -151,6 +151,17 @@ app.use('/*', async (c, next) => {
     if (!await managerUser.exists()) {
         await UserEntity.create(c.env, { id: managerEmail, name: 'Manager', phone: '1111111111', passwordHash: 'password', role: 'manager', status: 'approved', verified: true });
     }
+    // One-time patch for existing users to ensure they are verified
+    const allUsers = (await UserEntity.list(c.env)).items;
+    const unverifiedStudents = allUsers.filter(u => u.role === 'student' && !u.verified);
+    if (unverifiedStudents.length > 0) {
+        console.log(`Found ${unverifiedStudents.length} unverified students. Patching...`);
+        for (const student of unverifiedStudents) {
+            const studentEntity = new UserEntity(c.env, student.id);
+            await studentEntity.patch({ verified: true });
+        }
+        console.log("Finished patching unverified students.");
+    }
     await next();
 });
 // PUBLIC ROUTES
@@ -160,13 +171,13 @@ app.post('/api/register', async (c) => {
     if (!validation.success) return bad(c, validation.error.issues.map(e => e.message).join(', '));
     const { name, email, phone, password } = validation.data;
     if (await new UserEntity(c.env, email).exists()) return bad(c, 'User with this email already exists.');
-    const newUser = await UserEntity.create(c.env, { 
-        id: email, 
-        name, 
-        phone, 
-        passwordHash: password, 
-        role: 'student', 
-        status: 'pending', 
+    const newUser = await UserEntity.create(c.env, {
+        id: email,
+        name,
+        phone,
+        passwordHash: password,
+        role: 'student',
+        status: 'pending',
         verified: true // User is verified by default, but pending manager approval
     });
     const { passwordHash, ...userResponse } = newUser;
@@ -181,10 +192,9 @@ app.post('/api/login', async (c) => {
     if (!await userEntity.exists()) return notFound(c, 'User not found.');
     const user = await userEntity.getState();
     if (user.passwordHash !== password) return bad(c, 'Invalid credentials.');
-    if (user.role === 'student' && !user.verified) {
-        return bad(c, 'Please verify your email before logging in.');
+    if (user.role === 'student' && user.status !== 'approved') {
+        return c.json({ success: true, data: { status: user.status } }, 200);
     }
-    if (user.role === 'student' && user.status !== 'approved') return c.json({ success: true, data: { status: user.status } }, 200);
     const { passwordHash, ...userResponse } = user;
     return ok(c, { ...userResponse, token: `fake-token-for-${user.id}` });
 });
