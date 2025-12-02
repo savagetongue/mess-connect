@@ -107,7 +107,7 @@ const router = createBrowserRouter([
 export function App() {
   return (
     <I18nProvider>
-      <ErrorBoundary fallback={() => <RouteErrorBoundary />}>
+      <ErrorBoundary fallback={() => <div>Something went wrong.</div>}>
         <RouterProvider router={router} />
         <Toaster richColors />
       </ErrorBoundary>
