@@ -1,13 +1,14 @@
 import React from 'react';
-import { useRouteError, Link } from 'react-router-dom';
+
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Home, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import '@/lib/errorReporter'; // Assuming this sets up a global error reporter
 export function RouteErrorBoundary({ error: propError }: { error?: unknown }) {
-  const routeError = useRouteError();
-  const error = propError ?? routeError;
+  // Do not call useRouteError here so this boundary can safely render
+  // outside of a Router context. Rely only on the optional `error` prop.
+  const error = propError;
   console.error('Boundary Error:', error);
   // In a real app, you would report this error to a service like Sentry, LogRocket, etc.
   // The imported errorReporter is a placeholder for this functionality.
@@ -28,11 +29,9 @@ export function RouteErrorBoundary({ error: propError }: { error?: unknown }) {
             </div>
           </AlertDescription>
           <div className="flex gap-2 mt-4">
-            <Button asChild variant="outline">
-              <Link to="/">
-                <Home className="h-4 w-4 mr-2" />
-                Back to Home
-              </Link>
+            <Button variant="outline" onClick={() => (window.location.href = '/')}>
+              <Home className="h-4 w-4 mr-2" />
+              Back to Home
             </Button>
             <Button variant="destructive" onClick={() => window.location.reload()}>
               Reload Page
