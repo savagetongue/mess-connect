@@ -42,5 +42,12 @@ app.onError((err, c) => { console.error(`[ERROR] ${err}`); return c.json({ succe
 console.log(`Server is running`)
 // This export structure ensures compatibility with Cloudflare Workers' expected handler format.
 export default {
-  fetch: app.fetch as ExportedHandler<Env>['fetch'],
-};
+  fetch: (request: Request, env: Env, ctx: ExecutionContext) => {
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/api/')) {
+      return app.fetch(request, env, ctx);
+    }
+    // @ts-expect-error The `ASSETS` binding is provided by the Cloudflare Pages environment
+    return env.ASSETS.fetch(request);
+  }
+} as ExportedHandler<Env>;

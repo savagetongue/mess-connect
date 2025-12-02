@@ -1,8 +1,8 @@
+import React, { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
-import { useEffect } from "react";
 export const ProtectedRoute = ({ children, role }: { children: JSX.Element, role: 'student' | 'manager' | 'admin' }) => {
   const user = useAuth(s => s.user);
   const token = useAuth(s => s.token);
