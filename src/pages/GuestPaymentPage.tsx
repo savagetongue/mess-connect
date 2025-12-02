@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Toaster, toast } from '@/components/ui/sonner';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { ThemeToggle } from "../components/ThemeToggle";
 import { api } from '@/lib/api-client';
 import { Utensils, ArrowLeft } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -21,7 +21,7 @@ declare global {
 const guestPaymentSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   phone: z.string().min(10, { message: 'Please enter a valid phone number.' }),
-  amount: z.number().positive({ message: 'Amount must be a positive number.' }),
+  amount: z.number().positive({ message: 'Amount must be a positive number.' })
 });
 type GuestPaymentFormValues = z.infer<typeof guestPaymentSchema>;
 export function GuestPaymentPage() {
@@ -29,14 +29,14 @@ export function GuestPaymentPage() {
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm<GuestPaymentFormValues>({
     resolver: zodResolver(guestPaymentSchema),
-    defaultValues: { name: '', phone: '', amount: 0 },
+    defaultValues: { name: '', phone: '', amount: 0 }
   });
   const onSubmit = async (values: GuestPaymentFormValues) => {
     setIsLoading(true);
     try {
-      const order = await api<{ id: string; amount: number; currency: string }>('/api/payments/create-order', {
+      const order = await api<{id: string;amount: number;currency: string;}>('/api/payments/create-order', {
         method: 'POST',
-        body: JSON.stringify({ amount: values.amount, name: values.name, phone: values.phone }),
+        body: JSON.stringify({ amount: values.amount, name: values.name, phone: values.phone })
       });
       if (order.id.startsWith('mock_order_')) {
         try {
@@ -48,8 +48,8 @@ export function GuestPaymentPage() {
               razorpay_signature: 'mock_signature',
               amount: values.amount,
               name: values.name,
-              phone: values.phone,
-            }),
+              phone: values.phone
+            })
           });
           toast.success('Test payment successful!', { description: 'Thank you for dining with us.' });
           form.reset();
@@ -75,8 +75,8 @@ export function GuestPaymentPage() {
                 ...response,
                 amount: values.amount,
                 name: values.name,
-                phone: values.phone,
-              }),
+                phone: values.phone
+              })
             });
             toast.success('Payment successful!', { description: 'Thank you for dining with us.' });
             form.reset();
@@ -89,15 +89,15 @@ export function GuestPaymentPage() {
         modal: {
           ondismiss: function () {
             setIsLoading(false);
-          },
+          }
         },
         prefill: {
           name: values.name,
-          contact: values.phone,
+          contact: values.phone
         },
         theme: {
-          color: '#F97316',
-        },
+          color: '#F97316'
+        }
       };
       const rzp = new window.Razorpay(options);
       rzp.open();
@@ -132,31 +132,31 @@ export function GuestPaymentPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel>{t('fullNameLabel')}</FormLabel><FormControl><Input placeholder={t('fullNamePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="phone" render={({ field }) => (
-                <FormItem><FormLabel>{t('phoneLabel')}</FormLabel><FormControl><Input placeholder={t('phonePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField control={form.control} name="name" render={({ field }) =>
+              <FormItem><FormLabel>{t('fullNameLabel')}</FormLabel><FormControl><Input placeholder={t('fullNamePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
+              } />
+              <FormField control={form.control} name="phone" render={({ field }) =>
+              <FormItem><FormLabel>{t('phoneLabel')}</FormLabel><FormControl><Input placeholder={t('phonePlaceholder')} {...field} /></FormControl><FormMessage /></FormItem>
+              } />
               <FormField
                 control={form.control}
                 name="amount"
-                render={({ field }) => (
-                  <FormItem>
+                render={({ field }) =>
+                <FormItem>
                     <FormLabel>{t('amountLabel')}</FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
-                        placeholder={t('amountPlaceholder')}
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
-                        value={field.value ?? ''}
-                      />
+                      type="number"
+                      placeholder={t('amountPlaceholder')}
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
+                      value={field.value ?? ''} />
+
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
-              />
+                } />
+
               <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white" disabled={isLoading}>
                 {isLoading ? t('processingButton') : t('payNowButton')}
               </Button>
@@ -165,6 +165,6 @@ export function GuestPaymentPage() {
         </CardContent>
       </Card>
       <Toaster richColors />
-    </div>
-  );
+    </div>);
+
 }
