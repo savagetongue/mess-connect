@@ -6,6 +6,7 @@ import I18nProvider from '@/lib/i18n.tsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppLayout } from "@/components/layout/AppLayout";
 // Page Imports
 import { HomePage } from '@/pages/HomePage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -37,12 +38,12 @@ const AdminMenuPage = lazy(() => import('@/pages/admin/AdminMenuPage').then(modu
 // Layout & Auth
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 const PageLoader = () => (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
+  <AppLayout>
     <div className="space-y-4">
       <Skeleton className="h-12 w-1/2" />
       <Skeleton className="h-64 w-full" />
     </div>
-  </div>
+  </AppLayout>
 );
 const AnimatedOutlet = () => {
   const location = useLocation();

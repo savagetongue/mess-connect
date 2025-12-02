@@ -5,7 +5,7 @@ import { UserEntity, ComplaintEntity, MenuEntity, GuestPaymentEntity, PaymentEnt
 import { ok, bad, notFound, Index } from './core-utils';
 function bufferToBase64(buffer: ArrayBuffer): string {
   let binary = '';
-  const bytes = new UintArray(buffer);
+  const bytes = new Uint8Array(buffer);
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
