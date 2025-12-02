@@ -10,8 +10,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { api } from "@/lib/api-client";
 import { toast } from "@/components/ui/sonner";
 import { Send } from "lucide-react";
+import { motion } from "framer-motion";
+const MAX_MESSAGE_LENGTH = 500;
 const broadcastSchema = z.object({
-  message: z.string().min(10, "Message must be at least 10 characters long."),
+  message: z.string()
+    .min(10, "Message must be at least 10 characters long.")
+    .max(MAX_MESSAGE_LENGTH, `Message cannot exceed ${MAX_MESSAGE_LENGTH} characters.`),
 });
 type BroadcastFormValues = z.infer<typeof broadcastSchema>;
 export function ManagerBroadcastPage() {
@@ -20,6 +24,7 @@ export function ManagerBroadcastPage() {
     resolver: zodResolver(broadcastSchema),
     defaultValues: { message: "" },
   });
+  const messageValue = form.watch("message");
   const onSubmit = async (values: BroadcastFormValues) => {
     setIsLoading(true);
     try {
@@ -39,38 +44,49 @@ export function ManagerBroadcastPage() {
   };
   return (
     <AppLayout>
-      <Card>
-        <CardHeader>
-          <CardTitle>Broadcast Message</CardTitle>
-          <CardDescription>Send an urgent message to all students. (Note: This is a simulation and does not send real emails/SMS).</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="message"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Message</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="e.g., Mess will be closed tomorrow due to maintenance."
-                        rows={6}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Sending..." : <> <Send className="mr-2 h-4 w-4" /> Send Broadcast</>}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Broadcast Message</CardTitle>
+            <CardDescription>Send an urgent message to all students. (Note: This is a simulation and does not send real emails/SMS).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Message</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="e.g., Mess will be closed tomorrow due to maintenance."
+                          rows={6}
+                          maxLength={MAX_MESSAGE_LENGTH}
+                          aria-describedby="message-character-count"
+                          {...field}
+                        />
+                      </FormControl>
+                      <div className="flex justify-between items-center">
+                        <FormMessage />
+                        <p id="message-character-count" className="text-sm text-muted-foreground">
+                          {messageValue.length} / {MAX_MESSAGE_LENGTH}
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Sending..." : <> <Send className="mr-2 h-4 w-4" /> Send Broadcast</>}
+                  </Button>
+                </motion.div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </motion.div>
     </AppLayout>
   );
 }

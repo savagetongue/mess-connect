@@ -1,9 +1,11 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { createBrowserRouter, RouterProvider, useLocation, Outlet } from "react-router-dom";
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import I18nProvider from '@/lib/i18n.tsx';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Toaster } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 // Page Imports
 import { HomePage } from '@/pages/HomePage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -12,40 +14,50 @@ import { GuestPaymentPage } from '@/pages/GuestPaymentPage';
 import { VerificationPage } from '@/pages/VerificationPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 // Student Pages
-import { StudentDashboardPage } from '@/pages/student/StudentDashboardPage';
-import { WeeklyMenuPage } from '@/pages/student/WeeklyMenuPage';
-import { MyDuesPage } from '@/pages/student/MyDuesPage';
-import { ComplaintsPage } from '@/pages/student/ComplaintsPage';
-import { SuggestionsPage } from '@/pages/student/SuggestionsPage';
-import { NotificationsPage } from '@/pages/student/NotificationsPage';
-import { MessRulesPage } from '@/pages/student/MessRulesPage';
+const StudentDashboardPage = lazy(() => import('@/pages/student/StudentDashboardPage').then(module => ({ default: module.StudentDashboardPage })));
+const WeeklyMenuPage = lazy(() => import('@/pages/student/WeeklyMenuPage').then(module => ({ default: module.WeeklyMenuPage })));
+const MyDuesPage = lazy(() => import('@/pages/student/MyDuesPage').then(module => ({ default: module.MyDuesPage })));
+const ComplaintsPage = lazy(() => import('@/pages/student/ComplaintsPage').then(module => ({ default: module.ComplaintsPage })));
+const SuggestionsPage = lazy(() => import('@/pages/student/SuggestionsPage').then(module => ({ default: module.SuggestionsPage })));
+const NotificationsPage = lazy(() => import('@/pages/student/NotificationsPage').then(module => ({ default: module.NotificationsPage })));
+const MessRulesPage = lazy(() => import('@/pages/student/MessRulesPage').then(module => ({ default: module.MessRulesPage })));
 // Manager Pages
-import { ManagerDashboardPage } from '@/pages/manager/ManagerDashboardPage';
-import { StudentManagementPage } from '@/pages/manager/StudentManagementPage';
-import { UpdateMenuPage } from '@/pages/manager/UpdateMenuPage';
-import { ManagerFinancialsPage } from '@/pages/manager/ManagerFinancialsPage';
-import { ManagerFeedbackPage } from '@/pages/manager/ManagerFeedbackPage';
-import { ManagerSuggestionsPage } from '@/pages/manager/ManagerSuggestionsPage';
-import { ManagerNotesPage } from '@/pages/manager/ManagerNotesPage';
-import { ManagerBroadcastPage } from '@/pages/manager/ManagerBroadcastPage';
-import { ManagerSettingsPage } from '@/pages/manager/ManagerSettingsPage';
+const ManagerDashboardPage = lazy(() => import('@/pages/manager/ManagerDashboardPage').then(module => ({ default: module.ManagerDashboardPage })));
+const StudentManagementPage = lazy(() => import('@/pages/manager/StudentManagementPage').then(module => ({ default: module.StudentManagementPage })));
+const UpdateMenuPage = lazy(() => import('@/pages/manager/UpdateMenuPage').then(module => ({ default: module.UpdateMenuPage })));
+const ManagerFinancialsPage = lazy(() => import('@/pages/manager/ManagerFinancialsPage').then(module => ({ default: module.ManagerFinancialsPage })));
+const ManagerFeedbackPage = lazy(() => import('@/pages/manager/ManagerFeedbackPage').then(module => ({ default: module.ManagerFeedbackPage })));
+const ManagerSuggestionsPage = lazy(() => import('@/pages/manager/ManagerSuggestionsPage').then(module => ({ default: module.ManagerSuggestionsPage })));
+const ManagerNotesPage = lazy(() => import('@/pages/manager/ManagerNotesPage').then(module => ({ default: module.ManagerNotesPage })));
+const ManagerBroadcastPage = lazy(() => import('@/pages/manager/ManagerBroadcastPage').then(module => ({ default: module.ManagerBroadcastPage })));
+const ManagerSettingsPage = lazy(() => import('@/pages/manager/ManagerSettingsPage').then(module => ({ default: module.ManagerSettingsPage })));
 // Admin Pages
-import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
-import { AdminMenuPage } from '@/pages/admin/AdminMenuPage';
+const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage').then(module => ({ default: module.AdminDashboardPage })));
+const AdminMenuPage = lazy(() => import('@/pages/admin/AdminMenuPage').then(module => ({ default: module.AdminMenuPage })));
 // Layout & Auth
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+const PageLoader = () => (
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
+    <div className="space-y-4">
+      <Skeleton className="h-12 w-1/2" />
+      <Skeleton className="h-64 w-full" />
+    </div>
+  </div>
+);
 const AnimatedOutlet = () => {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.2, ease: 'easeInOut' }}
       >
-        <Outlet />
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
       </motion.div>
     </AnimatePresence>
   );
@@ -95,6 +107,7 @@ export function App() {
     <I18nProvider>
       <ErrorBoundary fallback={() => <RouteErrorBoundary />}>
         <RouterProvider router={router} />
+        <Toaster richColors />
       </ErrorBoundary>
     </I18nProvider>
   );
