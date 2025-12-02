@@ -179,13 +179,13 @@ function LoginCard({ role, onForgotPassword }: { role: 'Student' | 'Manager' | '
         {role === 'Student' && (
           <div className="text-center text-sm">
             {t('noAccount')}{' '}
-            <Button variant="link" className="p-0 h-auto text-orange-500" onClick={() => navigate('/register')}>
+            <Button type="button" variant="link" className="p-0 h-auto text-orange-500" onClick={() => navigate('/register')}>
               {t('registerHere')}
             </Button>
           </div>
         )}
         <div className="text-center text-sm">
-            <Button variant="link" className="p-0 h-auto text-orange-500" onClick={() => navigate('/guest-payment')}>
+            <Button type="button" variant="link" className="p-0 h-auto text-orange-500" onClick={() => navigate('/guest-payment')}>
               {t('guestPaymentLink')}
             </Button>
           </div>
