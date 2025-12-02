@@ -28,12 +28,12 @@ export function ManagerBroadcastPage() {
   const onSubmit = async (values: BroadcastFormValues) => {
     setIsLoading(true);
     try {
-      await api('/api/broadcast', {
+      const result = await api<{ message: string }>('/api/broadcast', {
         method: 'POST',
         body: JSON.stringify(values),
       });
       toast.success("Broadcast sent successfully!", {
-        description: "Your message has been queued for delivery to all students.",
+        description: result.message,
       });
       form.reset();
     } catch (error: any) {
@@ -48,7 +48,7 @@ export function ManagerBroadcastPage() {
         <Card>
           <CardHeader>
             <CardTitle>Broadcast Message</CardTitle>
-            <CardDescription>Send an urgent message to all students. (Note: This is a simulation and does not send real emails/SMS).</CardDescription>
+            <CardDescription>Send an urgent message to all approved students.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>

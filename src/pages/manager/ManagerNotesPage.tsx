@@ -11,11 +11,23 @@ import { api } from "@/lib/api-client";
 import type { Note } from "@shared/types";
 import { toast } from "@/components/ui/sonner";
 import { formatDistanceToNow } from "date-fns";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { motion } from "framer-motion";
+const noteSchema = z.object({
+  text: z.string().min(1, "Note cannot be empty."),
+});
+type NoteFormValues = z.infer<typeof noteSchema>;
 export function ManagerNotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [newNoteText, setNewNoteText] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const form = useForm<NoteFormValues>({
+    resolver: zodResolver(noteSchema),
+    defaultValues: { text: "" },
+  });
   const fetchNotes = async () => {
     try {
       setLoading(true);
@@ -30,17 +42,15 @@ export function ManagerNotesPage() {
   useEffect(() => {
     fetchNotes();
   }, []);
-  const handleAddNote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newNoteText.trim()) return;
+  const onSubmit = async (values: NoteFormValues) => {
     try {
       const newNote = await api<Note>('/api/notes', {
         method: 'POST',
-        body: JSON.stringify({ text: newNoteText.trim() }),
+        body: JSON.stringify({ text: values.text.trim() }),
       });
       setNotes(prev => [...prev, newNote]);
-      setNewNoteText("");
-      toast.success("Note added.");
+      form.reset();
+      toast.success("Note added successfully.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add note.");
     }
@@ -73,14 +83,25 @@ export function ManagerNotesPage() {
           <CardDescription>Manage your daily expenses and tasks. Your notes are saved automatically.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAddNote} className="flex gap-2 mb-4">
-            <Input
-              value={newNoteText}
-              onChange={(e) => setNewNoteText(e.target.value)}
-              placeholder="Add a new task or note..."
-            />
-            <Button type="submit" size="icon"><Plus className="h-4 w-4" /></Button>
-          </form>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex gap-2 mb-4 items-start">
+              <FormField
+                control={form.control}
+                name="text"
+                render={({ field }) => (
+                  <FormItem className="flex-grow">
+                    <FormControl>
+                      <Input placeholder="Add a new task or note..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" size="icon" disabled={form.formState.isSubmitting}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </form>
+          </Form>
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
@@ -99,7 +120,15 @@ export function ManagerNotesPage() {
               <p className="text-center text-muted-foreground py-8">No notes yet. Add one above to get started.</p>
             ) : (
               notes.map(note => (
-                <div key={note.id} className="flex items-center gap-3 p-2 border rounded-md hover:bg-muted/50">
+                <motion.div
+                  key={note.id}
+                  layout
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex items-center gap-3 p-2 border rounded-md hover:bg-muted/50"
+                >
                   <Checkbox
                     id={`note-${note.id}`}
                     checked={note.completed}
@@ -107,17 +136,17 @@ export function ManagerNotesPage() {
                   />
                   <label
                     htmlFor={`note-${note.id}`}
-                    className={`flex-grow text-sm ${note.completed ? 'line-through text-muted-foreground' : ''}`}
+                    className={`flex-grow text-sm cursor-pointer ${note.completed ? 'line-through text-muted-foreground' : ''}`}
                   >
                     {note.text}
                   </label>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
                     {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
                   </span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDeleteNote(note.id)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => handleDeleteNote(note.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
-                </div>
+                </motion.div>
               ))
             )}
           </div>
